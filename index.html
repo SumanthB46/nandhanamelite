@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nandhanam Elite Tourist Home | Thodupuzha, Kerala</title>
-  <meta name="description" content="Nandhanam Elite Tourist Home offers peaceful, comfortable, and affordable AC & Non-AC rooms in the heart of Thodupuzha, Kerala. Your comfort, our hospitality.">
+  <meta name="description" content="Nandhanam Elite Tourist Home offers peaceful, comfortable, and affordable AC & Non-AC rooms in the heart of Thodupuzha, Kerala. Check live availability and book directly.">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,28 +20,7 @@
   <header class="site-header" id="navbar">
     <div class="container header-container">
       <a href="#home" class="brand-logo" aria-label="Nandhanam Elite Home">
-        <div class="logo-emblem">
-          <svg viewBox="0 0 500 500" class="crest-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="goldGradNav" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#E2C48C"/>
-                <stop offset="50%" stop-color="#C5A880"/>
-                <stop offset="100%" stop-color="#9C7A4A"/>
-              </linearGradient>
-            </defs>
-            <circle cx="250" cy="250" r="160" fill="none" stroke="url(#goldGradNav)" stroke-width="8" stroke-linecap="round"/>
-            <path d="M 378 126 Q 378 136 388 136 Q 378 136 378 146 Q 378 136 368 136 Q 378 136 378 126 Z" fill="url(#goldGradNav)"/>
-            <g id="monogram-nav">
-              <path d="M 172 170 H 202 V 180 H 188 V 320 H 202 V 330 H 172 V 320 H 186 V 180 H 172 Z" fill="url(#goldGradNav)"/>
-              <path d="M 186 180 L 305 320 H 318 V 180 H 304 V 170 H 334 V 180 H 320 V 320 H 334 V 330 H 298 L 186 195 Z" fill="url(#goldGradNav)"/>
-              <path d="M 235 130 H 280 C 330 130 365 175 365 248 C 365 322 330 368 280 368 H 235 Z M 255 150 V 348 H 278 C 316 348 343 310 343 248 C 343 186 316 150 278 150 Z" fill="url(#goldGradNav)" opacity="0.95"/>
-            </g>
-          </svg>
-        </div>
-        <div class="logo-text">
-          <span class="brand-name">NANDHANAM ELITE</span>
-          <span class="brand-sub">TOURIST HOME</span>
-        </div>
+        <img src="Logo.png" alt="Nandhanam Elite Tourist Home" class="brand-logo-img">
       </a>
 
       <!-- Desktop Nav -->
@@ -51,14 +30,14 @@
           <li><a href="#about" class="nav-link">ABOUT</a></li>
           <li><a href="#rooms" class="nav-link">ROOMS</a></li>
           <li><a href="#amenities" class="nav-link">AMENITIES</a></li>
-          <li><a href="#location" class="nav-link">LOCATION</a></li>
+          <li><a href="#policies" class="nav-link">POLICIES</a></li>
           <li><a href="#gallery" class="nav-link">GALLERY</a></li>
           <li><a href="#contact" class="nav-link">CONTACT</a></li>
         </ul>
       </nav>
 
       <div class="header-action">
-        <a href="#booking" class="btn btn-gold-header">BOOK NOW</a>
+        <a href="#booking" class="btn btn-gold-header">CHECK AVAILABILITY</a>
         <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle navigation">
           <span></span>
           <span></span>
@@ -90,6 +69,73 @@
             </svg>
             CALL / WHATSAPP
           </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= AVAILABILITY SEARCH BAR ================= -->
+  <section class="search-bar-section" id="booking">
+    <div class="container">
+      <div class="search-bar-card">
+        <div class="search-bar-header">
+          <div class="search-bar-title-group">
+            <span class="search-bar-eyebrow">DIRECT RESERVATION ENGINE</span>
+            <h2 class="search-bar-title">Search & Check Live Availability</h2>
+          </div>
+          <div class="live-indicator-badge">
+            <span class="live-dot"></span>
+            <span>Live Sheet Sync</span>
+          </div>
+        </div>
+
+        <form class="availability-bar-form" id="availabilityForm" onsubmit="event.preventDefault(); window.checkAvailabilityAction();">
+          <div class="search-input-group">
+            <label for="checkinDate">Check-in Date</label>
+            <div class="input-with-icon">
+              <input type="date" id="checkinDate" required>
+            </div>
+            <span class="input-hint">From 2:00 PM</span>
+          </div>
+
+          <div class="search-input-group">
+            <label for="checkoutDate">Check-out Date</label>
+            <div class="input-with-icon">
+              <input type="date" id="checkoutDate" required>
+            </div>
+            <span class="input-hint">Until 11:00 AM</span>
+          </div>
+
+          <div class="search-input-group">
+            <label for="guestCount">Number of Guests</label>
+            <div class="input-with-icon select-wrapper">
+              <select id="guestCount" required>
+                <option value="1">1 Guest</option>
+                <option value="2" selected>2 Guests (1 Room)</option>
+                <option value="3">3 Guests</option>
+                <option value="4">4 Guests (Family Suite)</option>
+              </select>
+            </div>
+            <span class="input-hint" id="stayDurationHint">1 Night selected</span>
+          </div>
+
+          <div class="search-action-group">
+            <button type="submit" class="btn btn-primary-gold btn-check-now" id="checkAvailBtn">
+              <span class="btn-text">CHECK ROOMS</span>
+              <span class="btn-spinner" style="display:none;">⏳</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Availability Feedback Banner -->
+        <div class="availability-status-banner" id="availabilityBanner" style="display:none;">
+          <div class="status-banner-content">
+            <span class="banner-icon" id="bannerIcon">✓</span>
+            <div class="banner-text">
+              <h4 id="bannerTitle">Rooms Available</h4>
+              <p id="bannerDesc">Showing live availability for selected dates.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -160,58 +206,78 @@
       <div class="section-header text-center">
         <span class="section-label">OUR ROOMS</span>
         <h2 class="section-title">CHOOSE YOUR COMFORT</h2>
+        <p class="section-subtitle">Real-time availability is updated automatically for your chosen dates.</p>
       </div>
 
-      <div class="rooms-grid">
-        <!-- Room 1: AC Rooms -->
-        <div class="room-card">
+      <div class="rooms-grid" id="roomsGrid">
+        <!-- Room 1: AC Luxury Room (R001) -->
+        <div class="room-card" data-room-id="R001" data-capacity="2" data-price="2000">
           <div class="room-img-wrap">
             <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80" alt="AC Luxury Double Bedroom" class="room-img" loading="lazy">
+            <div class="room-tag">AIR CONDITIONED</div>
+            <div class="room-status-badge available" id="badge-R001">Available</div>
           </div>
           <div class="room-details">
-            <h3 class="room-type">AC ROOMS</h3>
+            <div class="room-header-meta">
+              <h3 class="room-type">AC LUXURY ROOM</h3>
+              <span class="room-capacity-chip">Max 2 Guests</span>
+            </div>
+            <p class="room-short-desc">Spacious climate-controlled room featuring plush queen bedding, attached bathroom, and quiet garden ambience.</p>
             <ul class="room-features-list">
               <li>
                 <span class="check-icon">✓</span>
-                <span>Air Conditioned Room</span>
+                <span>Air Conditioning</span>
               </li>
               <li>
                 <span class="check-icon">✓</span>
-                <span>Comfortable Double Bed</span>
+                <span>King / Queen Double Bed</span>
               </li>
               <li>
                 <span class="check-icon">✓</span>
-                <span>Attached Bathroom</span>
+                <span>Attached Bathroom & Hot Water</span>
               </li>
               <li>
                 <span class="check-icon">✓</span>
-                <span>Wi-Fi</span>
-              </li>
-              <li>
-                <span class="check-icon">✓</span>
-                <span>Hot Water</span>
+                <span>High-Speed Wi-Fi</span>
               </li>
             </ul>
-            <div class="room-pricing">
-              <span class="from-text">FROM </span>
-              <span class="price-value">₹2,000</span>
-              <span class="period"> / NIGHT</span>
+            
+            <div class="room-pricing-row">
+              <div class="room-pricing">
+                <span class="from-text">RATE </span>
+                <span class="price-value" id="price-R001">₹2,000</span>
+                <span class="period"> / NIGHT</span>
+              </div>
+              <div class="total-estimate" id="estimate-R001" style="display:none;">
+                <span class="est-label">Total for stay:</span>
+                <span class="est-amount">₹2,000</span>
+              </div>
             </div>
-            <button class="btn btn-dark-full book-room-btn" data-room="AC Room">BOOK THIS ROOM</button>
+
+            <div class="room-card-actions">
+              <button class="btn btn-outline-room view-details-btn" data-room-id="R001">VIEW DETAILS</button>
+              <button class="btn btn-dark-full book-room-btn" data-room-id="R001" data-room-name="AC Luxury Room" data-room-price="2000" data-capacity="2">SELECT & BOOK</button>
+            </div>
           </div>
         </div>
 
-        <!-- Room 2: Non AC Rooms -->
-        <div class="room-card">
+        <!-- Room 2: Non AC Comfort Room (R002) -->
+        <div class="room-card" data-room-id="R002" data-capacity="2" data-price="1500">
           <div class="room-img-wrap">
             <img src="https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=900&q=80" alt="Non AC Comfortable Bedroom" class="room-img" loading="lazy">
+            <div class="room-tag">NATURAL VENTILATION</div>
+            <div class="room-status-badge available" id="badge-R002">Available</div>
           </div>
           <div class="room-details">
-            <h3 class="room-type">NON AC ROOMS</h3>
+            <div class="room-header-meta">
+              <h3 class="room-type">NON AC COMFORT ROOM</h3>
+              <span class="room-capacity-chip">Max 2 Guests</span>
+            </div>
+            <p class="room-short-desc">Well-ventilated, breezy double bedroom designed for budget-conscious travellers seeking clean, peaceful accommodation.</p>
             <ul class="room-features-list">
               <li>
                 <span class="check-icon">✓</span>
-                <span>Well Ventilated Room</span>
+                <span>Natural Cross-Ventilation</span>
               </li>
               <li>
                 <span class="check-icon">✓</span>
@@ -219,29 +285,83 @@
               </li>
               <li>
                 <span class="check-icon">✓</span>
-                <span>Attached Bathroom</span>
+                <span>Attached Bathroom & Hot Water</span>
               </li>
               <li>
                 <span class="check-icon">✓</span>
-                <span>Wi-Fi</span>
-              </li>
-              <li>
-                <span class="check-icon">✓</span>
-                <span>Hot Water</span>
+                <span>High-Speed Wi-Fi</span>
               </li>
             </ul>
-            <div class="room-pricing">
-              <span class="from-text">FROM </span>
-              <span class="price-value">₹1,500</span>
-              <span class="period"> / NIGHT</span>
+            
+            <div class="room-pricing-row">
+              <div class="room-pricing">
+                <span class="from-text">RATE </span>
+                <span class="price-value" id="price-R002">₹1,500</span>
+                <span class="period"> / NIGHT</span>
+              </div>
+              <div class="total-estimate" id="estimate-R002" style="display:none;">
+                <span class="est-label">Total for stay:</span>
+                <span class="est-amount">₹1,500</span>
+              </div>
             </div>
-            <button class="btn btn-dark-full book-room-btn" data-room="Non AC Room">BOOK THIS ROOM</button>
+
+            <div class="room-card-actions">
+              <button class="btn btn-outline-room view-details-btn" data-room-id="R002">VIEW DETAILS</button>
+              <button class="btn btn-dark-full book-room-btn" data-room-id="R002" data-room-name="Non AC Comfort Room" data-room-price="1500" data-capacity="2">SELECT & BOOK</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="rooms-cta text-center">
-        <a href="#booking" class="btn btn-tan">CHECK AVAILABILITY</a>
+        <!-- Room 3: Family Executive Suite (R003) -->
+        <div class="room-card" data-room-id="R003" data-capacity="4" data-price="3200">
+          <div class="room-img-wrap">
+            <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80" alt="Family Executive Suite" class="room-img" loading="lazy">
+            <div class="room-tag">FAMILY SUITE</div>
+            <div class="room-status-badge available" id="badge-R003">Available</div>
+          </div>
+          <div class="room-details">
+            <div class="room-header-meta">
+              <h3 class="room-type">FAMILY EXECUTIVE SUITE</h3>
+              <span class="room-capacity-chip">Max 4 Guests</span>
+            </div>
+            <p class="room-short-desc">Expansive private suite with 2 double beds, AC, lounge sitting area, and private balcony ideal for families.</p>
+            <ul class="room-features-list">
+              <li>
+                <span class="check-icon">✓</span>
+                <span>Air Conditioned Suite</span>
+              </li>
+              <li>
+                <span class="check-icon">✓</span>
+                <span>2 Queen Beds (Fits 4 Guests)</span>
+              </li>
+              <li>
+                <span class="check-icon">✓</span>
+                <span>Attached Bathroom & Hot Water</span>
+              </li>
+              <li>
+                <span class="check-icon">✓</span>
+                <span>Balcony & Private Lounge</span>
+              </li>
+            </ul>
+            
+            <div class="room-pricing-row">
+              <div class="room-pricing">
+                <span class="from-text">RATE </span>
+                <span class="price-value" id="price-R003">₹3,200</span>
+                <span class="period"> / NIGHT</span>
+              </div>
+              <div class="total-estimate" id="estimate-R003" style="display:none;">
+                <span class="est-label">Total for stay:</span>
+                <span class="est-amount">₹3,200</span>
+              </div>
+            </div>
+
+            <div class="room-card-actions">
+              <button class="btn btn-outline-room view-details-btn" data-room-id="R003">VIEW DETAILS</button>
+              <button class="btn btn-dark-full book-room-btn" data-room-id="R003" data-room-name="Family Executive Suite" data-room-price="3200" data-capacity="4">SELECT & BOOK</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -278,7 +398,7 @@
               <circle cx="17" cy="17" r="2"></circle>
             </svg>
           </div>
-          <span class="amenity-name">Parking</span>
+          <span class="amenity-name">Free Parking</span>
         </div>
 
         <!-- 3. Air Conditioning -->
@@ -303,7 +423,7 @@
               <path d="M12 11v4 M10 13h4"></path>
             </svg>
           </div>
-          <span class="amenity-name">Hot Water</span>
+          <span class="amenity-name">24/7 Hot Water</span>
         </div>
 
         <!-- 5. Family Friendly -->
@@ -327,7 +447,7 @@
               <path d="m14 6 4 4"></path>
             </svg>
           </div>
-          <span class="amenity-name">Housekeeping</span>
+          <span class="amenity-name">Daily Housekeeping</span>
         </div>
 
         <!-- 7. Power Backup -->
@@ -338,6 +458,62 @@
             </svg>
           </div>
           <span class="amenity-name">Power Backup</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= POLICIES & HOUSE RULES SECTION ================= -->
+  <section class="policies-section" id="policies">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-label">POLICIES & HOUSE RULES</span>
+        <h2 class="section-title">CLEAR, HASSLE-FREE GUIDELINES</h2>
+      </div>
+
+      <div class="policies-grid">
+        <!-- 1. Check-In / Check-Out -->
+        <div class="policy-card">
+          <div class="policy-icon">🕒</div>
+          <h3 class="policy-title">Timings</h3>
+          <ul class="policy-list">
+            <li><strong>Check-in:</strong> From 2:00 PM onwards</li>
+            <li><strong>Check-out:</strong> Until 11:00 AM</li>
+            <li>Early check-in / late check-out subject to availability upon prior intimation.</li>
+          </ul>
+        </div>
+
+        <!-- 2. Payment & Confirmation -->
+        <div class="policy-card">
+          <div class="policy-icon">💳</div>
+          <h3 class="policy-title">Payment & Confirmation</h3>
+          <ul class="policy-list">
+            <li>No upfront online payment gateway fee required.</li>
+            <li>Host will confirm your booking via WhatsApp / Phone call.</li>
+            <li>Payment accepted via UPI, Google Pay, Bank Transfer, or Cash upon arrival.</li>
+          </ul>
+        </div>
+
+        <!-- 3. Cancellation & Early Vacating -->
+        <div class="policy-card">
+          <div class="policy-icon">🔄</div>
+          <h3 class="policy-title">Cancellation & Early Checkout</h3>
+          <ul class="policy-list">
+            <li>Free cancellation up to 24 hours prior to scheduled check-in.</li>
+            <li>If you vacate earlier than booked, notify the host to adjust checkout records.</li>
+            <li>Rooms are freed automatically for subsequent guests.</li>
+          </ul>
+        </div>
+
+        <!-- 4. Guest ID & House Rules -->
+        <div class="policy-card">
+          <div class="policy-icon">📋</div>
+          <h3 class="policy-title">Guest Identification & Rules</h3>
+          <ul class="policy-list">
+            <li>Valid Government ID proof (Aadhaar / Passport / DL) required at check-in.</li>
+            <li>Peaceful family environment: Quiet hours observed 10:00 PM – 7:00 AM.</li>
+            <li>Strictly no smoking inside bedrooms.</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -374,7 +550,6 @@
       </div>
 
       <div class="location-map">
-        <!-- Interactive Map Wrapper with Custom Overlay Marker matching design -->
         <div class="map-card-wrapper">
           <iframe 
             title="Nandhanam Elite Tourist Home Location Map"
@@ -404,6 +579,7 @@
     <div class="container">
       <div class="section-header text-center">
         <span class="section-label">GALLERY</span>
+        <h2 class="section-title">A GLIMPSE OF OUR PROPERTY</h2>
       </div>
 
       <div class="gallery-grid">
@@ -487,7 +663,7 @@
             </p>
             <div class="reviewer-meta">
               <span class="reviewer-name">– Anil Kumar</span>
-              <span class="review-source">Google</span>
+              <span class="review-source">Google Review</span>
             </div>
           </div>
 
@@ -495,7 +671,7 @@
           <div class="review-card">
             <div class="stars">★★★★★</div>
             <p class="review-quote">
-              "Peaceful location and easy access to everywhere. Highly recommended!"
+              "Peaceful location and easy access to everywhere in Thodupuzha. Highly recommended!"
             </p>
             <div class="reviewer-meta">
               <span class="reviewer-name">– Neethu S.</span>
@@ -507,11 +683,11 @@
           <div class="review-card">
             <div class="stars">★★★★★</div>
             <p class="review-quote">
-              "Comfortable stay with all basic amenities. Will definitely visit again."
+              "Comfortable stay with hot water, Wi-Fi, and quick room service. Will definitely visit again."
             </p>
             <div class="reviewer-meta">
               <span class="reviewer-name">– Jithin Thomas</span>
-              <span class="review-source">Google</span>
+              <span class="review-source">Google Review</span>
             </div>
           </div>
         </div>
@@ -525,66 +701,25 @@
     </div>
   </section>
 
-  <!-- ================= BOOK YOUR STAY / ENQUIRY SECTION ================= -->
-  <section class="booking-section" id="booking">
+  <!-- ================= DIRECT ENQUIRY HELPLINE BANNER ================= -->
+  <section class="helpline-banner-section">
     <div class="container">
-      <div class="section-header text-center">
-        <span class="section-label">BOOK YOUR STAY</span>
-        <h2 class="section-title">CHECK AVAILABILITY / ENQUIRE</h2>
-      </div>
-
-      <div class="booking-form-card">
-        <form class="booking-form-grid" id="bookingForm" onsubmit="event.preventDefault(); submitBooking();">
-          <div class="form-group">
-            <label for="checkinDate">Check-in Date</label>
-            <div class="input-with-icon">
-              <input type="date" id="checkinDate" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="checkoutDate">Check-out Date</label>
-            <div class="input-with-icon">
-              <input type="date" id="checkoutDate" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="guestCount">Guests</label>
-            <select id="guestCount" required>
-              <option value="" disabled selected>Select Guests</option>
-              <option value="1 Guest">1 Guest</option>
-              <option value="2 Guests">2 Guests (1 Room)</option>
-              <option value="3 Guests">3 Guests</option>
-              <option value="4+ Guests">4+ Guests (Family Suite)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="guestName">Name</label>
-            <input type="text" id="guestName" placeholder="Your Name" required>
-          </div>
-
-          <div class="form-group">
-            <label for="guestMobile">Mobile</label>
-            <input type="tel" id="guestMobile" placeholder="Your Mobile Number" required>
-          </div>
-
-          <div class="form-group form-submit-group">
-            <label class="invisible-label">&nbsp;</label>
-            <button type="submit" class="btn btn-tan-form">CHECK AVAILABILITY</button>
-          </div>
-        </form>
-
-        <p class="direct-contact-note text-center">
-          You can also contact us directly via 
-          <a href="https://wa.me/919447000000?text=Hello%20Nandhanam%20Elite,%20I%20would%20like%20to%20enquire%20about%20room%20availability." target="_blank" rel="noopener" class="wa-link">
-            <svg class="inline-wa-icon" viewBox="0 0 24 24" fill="#25D366">
+      <div class="helpline-card">
+        <div class="helpline-text">
+          <h3>Need Assistance or Custom Requirements?</h3>
+          <p>Talk directly with our property manager for group bookings, corporate stays, or immediate check-in inquiries.</p>
+        </div>
+        <div class="helpline-actions">
+          <a href="https://wa.me/919447000000?text=Hello%20Nandhanam%20Elite,%20I%20have%20an%20enquiry%20regarding%20booking%20a%20room." target="_blank" rel="noopener" class="btn btn-whatsapp-banner">
+            <svg class="inline-wa-icon" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.81 13.47 3.81 11.91C3.81 7.37 7.5 3.67 12.05 3.67Z"/>
             </svg>
-            WhatsApp
-          </a> or <a href="tel:+919447000000" class="call-link">Call</a>.
-        </p>
+            Chat on WhatsApp
+          </a>
+          <a href="tel:+919447000000" class="btn btn-outline-gold">
+            Call +91 94470 00000
+          </a>
+        </div>
       </div>
     </div>
   </section>
@@ -595,23 +730,8 @@
       <!-- Col 1: Brand -->
       <div class="footer-col brand-col">
         <div class="footer-logo">
-          <div class="logo-emblem">
-            <svg viewBox="0 0 500 500" class="crest-svg" fill="none">
-              <circle cx="250" cy="250" r="160" fill="none" stroke="url(#goldGradNav)" stroke-width="8" stroke-linecap="round"/>
-              <path d="M 378 126 Q 378 136 388 136 Q 378 136 378 146 Q 378 136 368 136 Q 378 136 378 126 Z" fill="url(#goldGradNav)"/>
-              <g>
-                <path d="M 172 170 H 202 V 180 H 188 V 320 H 202 V 330 H 172 V 320 H 186 V 180 H 172 Z" fill="url(#goldGradNav)"/>
-                <path d="M 186 180 L 305 320 H 318 V 180 H 304 V 170 H 334 V 180 H 320 V 320 H 334 V 330 H 298 L 186 195 Z" fill="url(#goldGradNav)"/>
-                <path d="M 235 130 H 280 C 330 130 365 175 365 248 C 365 322 330 368 280 368 H 235 Z M 255 150 V 348 H 278 C 316 348 343 310 343 248 C 343 186 316 150 278 150 Z" fill="url(#goldGradNav)" opacity="0.95"/>
-              </g>
-            </svg>
-          </div>
-          <div class="logo-text">
-            <span class="brand-name">NANDHANAM ELITE</span>
-            <span class="brand-sub">TOURIST HOME</span>
-          </div>
+          <img src="Logo.png" alt="Nandhanam Elite Tourist Home" class="footer-logo-img">
         </div>
-        <p class="footer-tagline">your comfort, our hospitality</p>
       </div>
 
       <!-- Col 2: Contact -->
@@ -620,7 +740,7 @@
         <ul class="footer-info-list">
           <li>
             <span class="footer-icon">📞</span>
-            <span>+91 xxxxxxxxxx</span>
+            <span>+91 94470 00000</span>
           </li>
           <li>
             <span class="footer-icon">✉️</span>
@@ -649,6 +769,7 @@
             <li><a href="#amenities">Amenities</a></li>
           </ul>
           <ul class="footer-links">
+            <li><a href="#policies">Policies</a></li>
             <li><a href="#location">Location</a></li>
             <li><a href="#gallery">Gallery</a></li>
             <li><a href="#contact">Contact</a></li>
@@ -681,20 +802,209 @@
     <!-- Bottom Bar -->
     <div class="footer-bottom">
       <div class="container footer-bottom-container">
-        <p class="copyright-text">&copy; 2024 Nandhanam Elite Tourist Home. All Rights Reserved.</p>
-        <p class="booking-notice">Direct website for bookings</p>
+        <p class="copyright-text">&copy; 2026 Nandhanam Elite Tourist Home. All Rights Reserved.</p>
+        <p class="booking-notice">Google Sheets & Apps Script Real-Time Availability Engine</p>
       </div>
     </div>
   </footer>
 
-  <!-- ================= LIGHTBOX MODAL ================= -->
+  <!-- ================= MODALS ================= -->
+
+  <!-- 1. ROOM DETAILS MODAL -->
+  <div class="custom-modal" id="roomDetailsModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog">
+      <button class="modal-close-btn" id="closeRoomDetailsModal">&times;</button>
+      <div class="modal-header">
+        <span class="modal-eyebrow" id="detailRoomTag">ROOM OVERVIEW</span>
+        <h3 class="modal-title" id="detailRoomName">AC Luxury Room</h3>
+      </div>
+      <div class="modal-body">
+        <div class="detail-gallery-img">
+          <img src="" alt="Room detail photo" id="detailRoomImg">
+        </div>
+        <p class="detail-desc" id="detailRoomDesc"></p>
+
+        <h4 class="modal-subtitle">Room Amenities</h4>
+        <div class="amenities-tags-list" id="detailAmenitiesList">
+          <!-- Injected via JS -->
+        </div>
+
+        <h4 class="modal-subtitle">Stay Information</h4>
+        <ul class="detail-info-bullets">
+          <li><strong>Check-in:</strong> 2:00 PM onwards | <strong>Check-out:</strong> Until 11:00 AM</li>
+          <li><strong>Max Capacity:</strong> <span id="detailCapacity">2</span> Guests</li>
+          <li><strong>Rate:</strong> <span id="detailPrice">₹2,000</span> per night</li>
+          <li><strong>Payment:</strong> Pay at property or via UPI upon manager confirmation</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-room" id="closeDetailBtn">CLOSE</button>
+        <button class="btn btn-primary-gold" id="detailBookNowBtn">BOOK THIS ROOM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. BOOKING FORM MODAL -->
+  <div class="custom-modal" id="bookingModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog">
+      <button class="modal-close-btn" id="closeBookingModal">&times;</button>
+      
+      <div class="modal-header">
+        <span class="modal-eyebrow">RESERVATION FORM</span>
+        <h3 class="modal-title" id="bookingModalRoomName">Book Your Stay</h3>
+      </div>
+
+      <!-- Stay Summary Card inside Modal -->
+      <div class="stay-summary-card">
+        <div class="summary-col">
+          <span class="sum-label">Check-in</span>
+          <strong id="sumCheckin">--</strong>
+        </div>
+        <div class="summary-col">
+          <span class="sum-label">Check-out</span>
+          <strong id="sumCheckout">--</strong>
+        </div>
+        <div class="summary-col">
+          <span class="sum-label">Duration</span>
+          <strong id="sumNights">1 Night</strong>
+        </div>
+        <div class="summary-col">
+          <span class="sum-label">Estimated Total</span>
+          <strong class="sum-price" id="sumTotalPrice">₹2,000</strong>
+        </div>
+      </div>
+
+      <form id="bookingSubmissionForm" onsubmit="event.preventDefault(); window.handleBookingSubmit();">
+        <input type="hidden" id="modalRoomId" value="R001">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="bookGuestName">Full Name *</label>
+            <input type="text" id="bookGuestName" placeholder="e.g. Rahul Sharma" required>
+          </div>
+          <div class="form-group">
+            <label for="bookGuestPhone">Phone / WhatsApp Number *</label>
+            <input type="tel" id="bookGuestPhone" placeholder="+91 98765 43210" required>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="bookGuestEmail">Email Address (Optional)</label>
+            <input type="email" id="bookGuestEmail" placeholder="yourname@gmail.com">
+          </div>
+          <div class="form-group">
+            <label for="bookGuestGuests">Number of Guests</label>
+            <select id="bookGuestGuests" required>
+              <option value="1">1 Guest</option>
+              <option value="2" selected>2 Guests</option>
+              <option value="3">3 Guests</option>
+              <option value="4">4 Guests</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="bookSpecialRequests">Special Requests / Estimated Arrival Time</label>
+          <textarea id="bookSpecialRequests" rows="2" placeholder="e.g., Arriving around 4 PM, extra towel requested"></textarea>
+        </div>
+
+        <div class="payment-reassurance-note">
+          <span class="info-icon">ℹ️</span>
+          <span>No payment gateway fee is charged on this website. Our team will verify dates and contact you on WhatsApp / Phone to confirm payment (UPI/Cash).</span>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-room" id="cancelBookingBtn">CANCEL</button>
+          <button type="submit" class="btn btn-primary-gold" id="confirmBookingSubmitBtn">
+            <span class="btn-text">CONFIRM & SUBMIT BOOKING</span>
+            <span class="btn-spinner" style="display:none;">⏳ Processing...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. BOOKING CONFIRMATION MODAL -->
+  <div class="custom-modal" id="confirmationModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog confirmation-dialog">
+      <button class="modal-close-btn" id="closeConfirmationModal">&times;</button>
+      
+      <div class="confirmation-badge">
+        <div class="check-circle">✓</div>
+      </div>
+
+      <div class="confirmation-header text-center">
+        <span class="modal-eyebrow-green">REQUEST RECEIVED SUCCESSFULLY</span>
+        <h3 class="modal-title">Booking Request Placed</h3>
+        <p class="confirmation-sub">Your stay request has been recorded in the Nandhanam Elite booking database.</p>
+      </div>
+
+      <div class="booking-id-banner">
+        <span class="bid-label">YOUR BOOKING REFERENCE ID</span>
+        <strong class="bid-value" id="confBookingId">NE-202608-1001</strong>
+      </div>
+
+      <div class="confirmation-details-table">
+        <div class="conf-row">
+          <span class="c-key">Room Type:</span>
+          <span class="c-val" id="confRoomName">AC Luxury Room</span>
+        </div>
+        <div class="conf-row">
+          <span class="c-key">Guest Name:</span>
+          <span class="c-val" id="confGuestName">Rahul Sharma</span>
+        </div>
+        <div class="conf-row">
+          <span class="c-key">Contact Phone:</span>
+          <span class="c-val" id="confGuestPhone">+91 9876543210</span>
+        </div>
+        <div class="conf-row">
+          <span class="c-key">Dates:</span>
+          <span class="c-val" id="confStayDates">2026-08-25 to 2026-08-27 (2 Nights)</span>
+        </div>
+        <div class="conf-row">
+          <span class="c-key">Guests:</span>
+          <span class="c-val" id="confGuestCount">2 Guests</span>
+        </div>
+        <div class="conf-row highlight-price">
+          <span class="c-key">Total Estimated Amount:</span>
+          <span class="c-val sum-price" id="confTotalPrice">₹4,000</span>
+        </div>
+        <div class="conf-row">
+          <span class="c-key">Booking Status:</span>
+          <span class="c-val status-pending-chip" id="confStatus">Pending Confirmation</span>
+        </div>
+      </div>
+
+      <div class="next-steps-card">
+        <h4>What Happens Next?</h4>
+        <p>1. Our property manager has received your booking details and will contact you via WhatsApp / Phone to confirm your arrival time.</p>
+        <p>2. Payment is collected directly by the host via UPI or Cash upon arrival.</p>
+      </div>
+
+      <div class="confirmation-actions">
+        <a href="#" id="confWhatsAppBtn" target="_blank" rel="noopener" class="btn btn-whatsapp-banner">
+          <svg class="inline-wa-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.81 13.47 3.81 11.91C3.81 7.37 7.5 3.67 12.05 3.67Z"/>
+          </svg>
+          Share on WhatsApp
+        </a>
+        <button class="btn btn-outline-room" onclick="window.print();">Print / Save Summary</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. GALLERY LIGHTBOX MODAL -->
   <div class="lightbox-modal" id="lightboxModal">
     <span class="lightbox-close" id="lightboxClose">&times;</span>
     <img src="" alt="Enlarged Preview" id="lightboxImg">
     <div class="lightbox-caption" id="lightboxCaption"></div>
   </div>
 
-  <!-- Main JavaScript -->
+  <!-- Main JavaScript Engine -->
   <script src="script.js"></script>
 </body>
 </html>
