@@ -1637,6 +1637,12 @@ button, input, select, textarea {
   gap: 16px;
 }
 
+.form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 14px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
@@ -2032,7 +2038,8 @@ button, input, select, textarea {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .form-row-2 {
+  .form-row-2,
+  .form-row-3 {
     grid-template-columns: 1fr;
   }
   

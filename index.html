@@ -890,19 +890,27 @@
           </div>
         </div>
 
-        <div class="form-row-2">
+        <div class="form-row-3">
           <div class="form-group">
-            <label for="bookGuestEmail">Email Address (Optional)</label>
-            <input type="email" id="bookGuestEmail" placeholder="yourname@gmail.com">
+            <label for="bookAdults">Adults (12+ yrs) *</label>
+            <select id="bookAdults" required>
+              <option value="1">1 Adult</option>
+              <option value="2" selected>2 Adults</option>
+              <option value="3">3 Adults</option>
+              <option value="4">4 Adults</option>
+            </select>
           </div>
           <div class="form-group">
-            <label for="bookGuestGuests">Number of Guests</label>
-            <select id="bookGuestGuests" required>
-              <option value="1">1 Guest</option>
-              <option value="2" selected>2 Guests</option>
-              <option value="3">3 Guests</option>
-              <option value="4">4 Guests</option>
+            <label for="bookChildren">Children (0-11 yrs)</label>
+            <select id="bookChildren">
+              <option value="0" selected>0 Children</option>
+              <option value="1">1 Child</option>
+              <option value="2">2 Children</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label for="bookGuestEmail">Email (Optional)</label>
+            <input type="email" id="bookGuestEmail" placeholder="yourname@gmail.com">
           </div>
         </div>
 

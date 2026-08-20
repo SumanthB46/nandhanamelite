@@ -54,14 +54,23 @@ const ROOMS_DATA = {
 const LOCAL_BOOKINGS_STORE = [
   // Sample booking for demonstration (blocks R001 on sample dates)
   {
-    booking_id: 'NE-SAMPLE-01',
+    booking_id: 'BK-20260820-0001',
     room_id: 'R001',
+    room_name: 'AC Luxury Room',
+    guest_name: 'Rahul Sharma',
+    phone: '+91 98765 43210',
+    email: 'rahul@example.com',
     check_in: getOffsetDateString(5),
     check_out: getOffsetDateString(7),
-    guest_name: 'Rahul Sharma',
-    guest_phone: '+91 9876543210',
-    guests: 2,
-    status: 'Confirmed'
+    adults: 2,
+    children: 0,
+    total_guests: 2,
+    price_per_night: 2000,
+    total_amount: 4000,
+    status: 'Confirmed',
+    notes: 'Airport pickup enquiry',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   }
 ];
 
@@ -513,7 +522,8 @@ function openBookingModal(roomId) {
   const sumCheckout = document.getElementById('sumCheckout');
   const sumNights = document.getElementById('sumNights');
   const sumTotalPrice = document.getElementById('sumTotalPrice');
-  const guestGuestSelect = document.getElementById('bookGuestGuests');
+  const bookAdults = document.getElementById('bookAdults');
+  const bookChildren = document.getElementById('bookChildren');
 
   if (roomNameEl) roomNameEl.textContent = room.name;
   if (modalRoomIdInput) modalRoomIdInput.value = room.id;
@@ -522,8 +532,12 @@ function openBookingModal(roomId) {
   if (sumNights) sumNights.textContent = `${nights} ${nights === 1 ? 'Night' : 'Nights'}`;
   if (sumTotalPrice) sumTotalPrice.textContent = `₹${totalPrice.toLocaleString('en-IN')}`;
 
-  if (guestGuestSelect) {
-    guestGuestSelect.value = guests <= room.capacity ? String(guests) : String(room.capacity);
+  if (bookAdults) {
+    const numGuests = parseInt(guests, 10) || 2;
+    bookAdults.value = numGuests <= room.capacity ? String(numGuests) : String(room.capacity);
+  }
+  if (bookChildren) {
+    bookChildren.value = '0';
   }
 
   openModal(modal);
@@ -538,7 +552,9 @@ window.handleBookingSubmit = async function() {
   const name = document.getElementById('bookGuestName').value.trim();
   const phone = document.getElementById('bookGuestPhone').value.trim();
   const email = document.getElementById('bookGuestEmail').value.trim();
-  const guests = parseInt(document.getElementById('bookGuestGuests').value, 10);
+  const adults = parseInt(document.getElementById('bookAdults').value || '1', 10);
+  const children = parseInt(document.getElementById('bookChildren').value || '0', 10);
+  const totalGuests = adults + children;
   const notes = document.getElementById('bookSpecialRequests').value.trim();
 
   const checkin = document.getElementById('checkinDate').value;
@@ -548,6 +564,11 @@ window.handleBookingSubmit = async function() {
 
   if (!name || !phone) {
     alert('Please enter your full name and phone number.');
+    return;
+  }
+
+  if (room && totalGuests > room.capacity) {
+    alert(`Guest count (${totalGuests}) exceeds the maximum capacity of ${room.name} (${room.capacity} guests max).`);
     return;
   }
 
@@ -571,10 +592,12 @@ window.handleBookingSubmit = async function() {
         check_in: checkin,
         check_out: checkout,
         guest_name: name,
-        guest_phone: phone,
-        guest_email: email,
-        guest_count: guests,
-        special_requests: notes
+        phone: phone,
+        email: email,
+        adults: adults,
+        children: children,
+        total_guests: totalGuests,
+        notes: notes
       };
 
       const response = await fetch(APPS_SCRIPT_URL, {
@@ -591,33 +614,38 @@ window.handleBookingSubmit = async function() {
     } else {
       // Local Mock Store booking creation
       // Re-verify availability
-      const availCheck = calculateLocalAvailability(checkin, checkout, guests);
+      const availCheck = calculateLocalAvailability(checkin, checkout, totalGuests);
       const targetAvail = availCheck.find(r => r.room_id === roomId);
       if (!targetAvail || !targetAvail.is_available) {
         throw new Error('Sorry, this room is no longer available for the selected dates. Please choose another date or room.');
       }
 
-      // Generate ID
+      // Generate ID BK-YYYYMMDD-XXXX
       const today = new Date();
       const yr = today.getFullYear();
       const mo = String(today.getMonth() + 1).padStart(2, '0');
+      const da = String(today.getDate()).padStart(2, '0');
       const rand = Math.floor(1000 + Math.random() * 9000);
-      const bookingId = `NE-${yr}${mo}-${rand}`;
+      const bookingId = `BK-${yr}${mo}${da}-${rand}`;
 
       const newBooking = {
         booking_id: bookingId,
         room_id: roomId,
         room_name: room.name,
         guest_name: name,
-        guest_phone: phone,
-        guest_email: email,
+        phone: phone,
+        email: email,
         check_in: checkin,
         check_out: checkout,
-        guests: guests,
+        adults: adults,
+        children: children,
+        total_guests: totalGuests,
         total_nights: nights,
-        total_price: totalPrice,
+        price_per_night: room.price,
+        total_amount: totalPrice,
         status: 'Pending',
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         notes: notes
       };
 
@@ -659,13 +687,21 @@ function showConfirmationModal(details) {
   const priceEl = document.getElementById('confTotalPrice');
   const waBtn = document.getElementById('confWhatsAppBtn');
 
+  var totalAmount = details.total_amount || details.total_price || 0;
+  var totalGuests = details.total_guests || details.guest_count || details.guests || 1;
+  var guestBreakdown = `${totalGuests} Guests`;
+  if (details.adults) {
+    guestBreakdown = `${details.adults} ${details.adults === 1 ? 'Adult' : 'Adults'}` + 
+      (details.children > 0 ? `, ${details.children} ${details.children === 1 ? 'Child' : 'Children'}` : '');
+  }
+
   if (idEl) idEl.textContent = details.booking_id;
   if (roomEl) roomEl.textContent = details.room_name || details.room_id;
   if (nameEl) nameEl.textContent = details.guest_name;
-  if (phoneEl) phoneEl.textContent = details.guest_phone;
+  if (phoneEl) phoneEl.textContent = details.phone || details.guest_phone;
   if (datesEl) datesEl.textContent = `${details.check_in} to ${details.check_out} (${details.total_nights} Nights)`;
-  if (guestsEl) guestsEl.textContent = `${details.guests || details.guest_count} Guests`;
-  if (priceEl) priceEl.textContent = `₹${(details.total_price || 0).toLocaleString('en-IN')}`;
+  if (guestsEl) guestsEl.textContent = guestBreakdown;
+  if (priceEl) priceEl.textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
 
   // Build WhatsApp share message
   const waMessage = 
@@ -674,11 +710,11 @@ function showConfirmationModal(details) {
     `• *Booking ID:* ${encodeURIComponent(details.booking_id)}%0A` +
     `• *Room:* ${encodeURIComponent(details.room_name || details.room_id)}%0A` +
     `• *Guest Name:* ${encodeURIComponent(details.guest_name)}%0A` +
-    `• *Phone:* ${encodeURIComponent(details.guest_phone)}%0A` +
+    `• *Phone:* ${encodeURIComponent(details.phone || details.guest_phone)}%0A` +
     `• *Check-in:* ${encodeURIComponent(details.check_in)}%0A` +
     `• *Check-out:* ${encodeURIComponent(details.check_out)} (${details.total_nights} Nights)%0A` +
-    `• *Guests:* ${encodeURIComponent(details.guests || details.guest_count)}%0A` +
-    `• *Total Estimated Price:* ₹${(details.total_price || 0).toLocaleString('en-IN')}%0A` +
+    `• *Guests:* ${encodeURIComponent(guestBreakdown)}%0A` +
+    `• *Total Amount (Snapshot):* ₹${totalAmount.toLocaleString('en-IN')}%0A` +
     `----------------------------------------%0A` +
     `Hello, I have submitted this booking request on your website. Please confirm availability and share payment/check-in details.`;
 
