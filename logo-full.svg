@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="goldTextGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E2C48C"/>
+      <stop offset="50%" stop-color="#C5A880"/>
+      <stop offset="100%" stop-color="#9C7A4A"/>
+    </linearGradient>
+    <style>
+      .brand-title {
+        font-family: 'Cinzel', 'Playfair Display', serif;
+        font-size: 42px;
+        letter-spacing: 12px;
+        fill: #1a1a1a;
+        font-weight: 600;
+        text-anchor: middle;
+      }
+      .brand-title-light {
+        font-family: 'Cinzel', 'Playfair Display', serif;
+        font-size: 42px;
+        letter-spacing: 12px;
+        fill: #FFFFFF;
+        font-weight: 600;
+        text-anchor: middle;
+      }
+      .tourist-home {
+        font-family: 'Cinzel', 'Playfair Display', serif;
+        font-size: 19px;
+        letter-spacing: 8px;
+        fill: url(#goldTextGrad);
+        font-weight: 600;
+        text-anchor: middle;
+      }
+      .tagline {
+        font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+        font-size: 26px;
+        font-style: italic;
+        letter-spacing: 2px;
+        fill: url(#goldTextGrad);
+        text-anchor: middle;
+      }
+    </style>
+  </defs>
+
+  <!-- Circular Outer Thin Ring with crescent styling -->
+  <circle cx="400" cy="130" r="85" fill="none" stroke="url(#goldTextGrad)" stroke-width="2.5" stroke-linecap="round"/>
+  
+  <!-- Four-point star sparkle at top right -->
+  <path d="M 468 64 Q 468 70 474 70 Q 468 70 468 76 Q 468 70 462 70 Q 468 70 468 64 Z" fill="url(#goldTextGrad)"/>
+
+  <!-- Stylized Serif Monogram N and D combined -->
+  <g transform="translate(400, 130) scale(0.55) translate(-250, -250)">
+    <!-- Left Stem of N -->
+    <path d="M 172 170 H 202 V 180 H 188 V 320 H 202 V 330 H 172 V 320 H 186 V 180 H 172 Z" fill="url(#goldTextGrad)"/>
+    <!-- Diagonal of N -->
+    <path d="M 186 180 L 305 320 H 318 V 180 H 304 V 170 H 334 V 180 H 320 V 320 H 334 V 330 H 298 L 186 195 Z" fill="url(#goldTextGrad)"/>
+    <!-- Interlocking D -->
+    <path d="M 235 130 H 280 C 330 130 365 175 365 248 C 365 322 330 368 280 368 H 235 Z M 255 150 V 348 H 278 C 316 348 343 310 343 248 C 343 186 316 150 278 150 Z" fill="url(#goldTextGrad)" opacity="0.95"/>
+  </g>
+
+  <!-- Typography: NANDHANAM ELITE -->
+  <text x="406" y="275" class="brand-title">NANDHANAM ELITE</text>
+
+  <!-- TOURIST HOME with lines -->
+  <line x1="220" y1="315" x2="280" y2="315" stroke="url(#goldTextGrad)" stroke-width="1.5"/>
+  <text x="404" y="322" class="tourist-home">TOURIST HOME</text>
+  <line x1="528" y1="315" x2="588" y2="315" stroke="url(#goldTextGrad)" stroke-width="1.5"/>
+
+  <!-- Diamond Ornament -->
+  <line x1="330" y1="358" x2="385" y2="358" stroke="url(#goldTextGrad)" stroke-width="1"/>
+  <path d="M 400 353 Q 400 358 405 358 Q 400 358 400 363 Q 400 358 395 358 Q 400 358 400 353 Z" fill="url(#goldTextGrad)"/>
+  <line x1="415" y1="358" x2="470" y2="358" stroke="url(#goldTextGrad)" stroke-width="1"/>
+
+  <!-- Tagline: your comfort, our hospitality -->
+  <text x="400" y="405" class="tagline">your comfort, our hospitality</text>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DEBE88"/>
+      <stop offset="50%" stop-color="#C5A880"/>
+      <stop offset="100%" stop-color="#9E7D4E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Circular Outer Thin Ring with crescent opening top -->
+  <circle cx="250" cy="250" r="160" fill="none" stroke="url(#goldGradient)" stroke-width="4.5" stroke-linecap="round"/>
+  
+  <!-- Four-point star sparkle at top right (~1:30 position) -->
+  <path d="M 378 126 Q 378 136 388 136 Q 378 136 378 146 Q 378 136 368 136 Q 378 136 378 126 Z" fill="url(#goldGradient)"/>
+
+  <!-- Stylized Serif Monogram N and D combined (NDN Monogram) -->
+  <!-- Left Stem of N -->
+  <path d="M 172 170 H 202 V 180 H 188 V 320 H 202 V 330 H 172 V 320 H 186 V 180 H 172 Z" fill="url(#goldGradient)"/>
+  
+  <!-- Diagonal of N -->
+  <path d="M 186 180 L 305 320 H 318 V 180 H 304 V 170 H 334 V 180 H 320 V 320 H 334 V 330 H 298 L 186 195 Z" fill="url(#goldGradient)"/>
+  
+  <!-- Interlocking D (Central tall letter D) -->
+  <!-- D vertical spine with serifs -->
+  <path d="M 235 130 H 280 C 330 130 365 175 365 248 C 365 322 330 368 280 368 H 235 Z M 255 150 V 348 H 278 C 316 348 343 310 343 248 C 343 186 316 150 278 150 Z" fill="url(#goldGradient)" opacity="0.95"/>
+</svg>
