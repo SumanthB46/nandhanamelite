@@ -1,18 +1,15 @@
 /**
  * ============================================================================
- * NANDHANAM ELITE HOMESTAY - ENTERPRISE GOOGLE APPS SCRIPT BACKEND API (v2)
+ * NANDHANAM ELITE HOMESTAY - ENTERPRISE GOOGLE APPS SCRIPT BACKEND API (v2.1)
  * ============================================================================
  * 
- * CORE ARCHITECTURAL PRINCIPLES:
- * 1. Concurrency Control: LockService around final availability check + booking insertion.
- * 2. Status Blocking: 'Pending' and 'Confirmed' block availability. 'Cancelled', 'Expired', 'Completed' do not.
- * 3. Pending Expiration: Pending bookings older than 24 hours automatically expire and release dates.
- * 4. Option A Physical Rooms: Every unit has a unique room_id (e.g., R001, R002, R003).
- * 5. Server-Side Trust & Price Snapshot: Price and status are NEVER accepted from client-side.
- *    Server reads current price from Rooms sheet, captures a permanent price_per_night snapshot.
- * 6. Explicit Timezone: All date math and timestamps use 'Asia/Kolkata' timezone.
- * 7. Abuse & Input Validation: Strict phone, name, email, date range, guest capacity constraints.
- * 8. Booking ID Generator: Atomic formatted ID: BK-YYYYMMDD-XXXX.
+ * VERIFIED ENTERPRISE CONTROLS:
+ * 1. Time-driven Expiration Trigger: autoExpirePendingBookings() runs hourly via ScriptApp trigger.
+ * 2. Universal LockService: ALL create, update, cancel, early-checkout, and expiration operations use LockService.
+ * 3. Collision-Free Booking IDs: Unique BK-YYYYMMDD-XXXX checked against existing IDs inside lock.
+ * 4. Lock Timeout Handling: Returns structured LOCK_TIMEOUT with frontend retry support.
+ * 5. Server-Side Price & Status Protection: Client cannot set status or manipulate rates.
+ * 6. Timezone: Asia/Kolkata throughout all date math and timestamps.
  */
 
 // Global Configuration
@@ -68,12 +65,13 @@ function doPost(e) {
   var lock = LockService.getScriptLock();
   
   try {
-    // Acquire lock up to 15 seconds to completely eliminate race conditions
+    // 15-second lock acquisition to eliminate all race conditions
     var hasLock = lock.tryLock(15000);
     if (!hasLock) {
       return jsonResponse({
         status: 'error',
-        message: 'The booking engine is currently processing another transaction. Please retry in a few seconds.'
+        code: 'LOCK_TIMEOUT',
+        message: 'The booking engine is currently processing high traffic. Please retry in a few moments.'
       });
     }
     
@@ -257,18 +255,9 @@ function handleCheckAvailability(checkinStr, checkoutStr, guests, filterRoomId) 
 }
 
 /**
- * 3. Create Booking Request with Atomic Lock & Security Boundaries
- * 
- * Rules:
- * - Room ID verified against Rooms sheet
- * - Price ALWAYS read from Rooms sheet (never client-supplied)
- * - Status is ALWAYS forced to 'Pending'
- * - Atomic check of date overlap inside LockService
- * - Booking ID generation BK-YYYYMMDD-XXXX
- * - Timestamp recording in Asia/Kolkata
+ * 3. Create Booking Request (Atomic Lock + Collision-Free ID + Price Snapshot)
  */
 function handleCreateBookingLocked(data) {
-  // Input Validation & Sanitation
   var roomId = String(data.room_id || '').trim();
   var checkinStr = String(data.check_in || '').trim();
   var checkoutStr = String(data.check_out || '').trim();
@@ -280,7 +269,6 @@ function handleCreateBookingLocked(data) {
   var totalGuests = parseInt(data.total_guests || data.guest_count || data.guests || (adults + children), 10);
   var notes = String(data.notes || data.special_requests || '').trim();
   
-  // Security Checks: Length limits & formats
   if (!roomId || !checkinStr || !checkoutStr || !guestName || !phone) {
     return { status: 'error', message: 'Missing required fields: Room, Check-in, Check-out, Full Name, and Phone number are mandatory.' };
   }
@@ -360,7 +348,9 @@ function handleCreateBookingLocked(data) {
   var bookingSheet = ss.getSheetByName(SHEET_BOOKINGS);
   if (!bookingSheet) return { status: 'error', message: 'Bookings sheet not found.' };
   
+  var bRows = bookingSheet.getDataRange().getValues();
   var activeBookings = getActiveBookingsFromSheet(bookingSheet);
+  
   for (var k = 0; k < activeBookings.length; k++) {
     var ab = activeBookings[k];
     if (ab.room_id === roomId) {
@@ -373,21 +363,28 @@ function handleCreateBookingLocked(data) {
     }
   }
   
+  // Collision-free unique ID generation check
+  var existingIds = {};
+  for (var r = 1; r < bRows.length; r++) {
+    existingIds[String(bRows[r][0]).trim()] = true;
+  }
+  
+  var now = new Date();
+  var datePrefix = Utilities.formatDate(now, TIMEZONE, 'yyyyMMdd');
+  var bookingId = '';
+  do {
+    var randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    bookingId = 'BK-' + datePrefix + '-' + randomSuffix;
+  } while (existingIds[bookingId]);
+  
   // Calculate Stay & Price Snapshot
   var diffTime = Math.abs(reqOut - reqIn);
   var totalNights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   var pricePerNightSnapshot = matchedRoom.price_per_night;
   var totalAmount = pricePerNightSnapshot * totalNights;
-  
-  // Generate Unique Atomic Booking ID: BK-YYYYMMDD-XXXX
-  var now = new Date();
-  var datePrefix = Utilities.formatDate(now, TIMEZONE, 'yyyyMMdd');
-  var randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  var bookingId = 'BK-' + datePrefix + '-' + randomSuffix;
   var timestampStr = getFormattedTimestamp();
   
   // Append to Bookings Sheet:
-  // [booking_id, room_id, room_name, guest_name, phone, email, check_in, check_out, adults, children, total_guests, price_per_night, total_amount, status, notes, created_at, updated_at]
   bookingSheet.appendRow([
     bookingId,
     roomId,
@@ -434,7 +431,7 @@ function handleCreateBookingLocked(data) {
 }
 
 /**
- * 4. Cancel a Booking (Sets status to Cancelled, preserving audit history)
+ * 4. Cancel a Booking (Locked)
  */
 function handleCancelBookingLocked(bookingId) {
   if (!bookingId) return { status: 'error', message: 'Booking ID is required.' };
@@ -463,7 +460,7 @@ function handleCancelBookingLocked(bookingId) {
 }
 
 /**
- * 5. Update Booking (Modify check_out or status from Sheets/Admin)
+ * 5. Update Booking (Locked)
  */
 function handleUpdateBookingLocked(data) {
   var bookingId = String(data.booking_id || '').trim();
@@ -508,6 +505,73 @@ function handleUpdateBookingLocked(data) {
   }
   
   return { status: 'error', message: 'Booking ID not found.' };
+}
+
+/**
+ * 6. Time-Driven Background Trigger: Auto-Expire Stale Pending Bookings
+ * Automatically runs every hour via Google Apps Script time trigger.
+ */
+function autoExpirePendingBookings() {
+  var lock = LockService.getScriptLock();
+  try {
+    var hasLock = lock.tryLock(15000);
+    if (!hasLock) return;
+    
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEET_BOOKINGS);
+    if (!sheet || sheet.getLastRow() <= 1) return;
+    
+    var rows = sheet.getDataRange().getValues();
+    var headers = rows[0].map(function(h) { return String(h).trim().toLowerCase(); });
+    var statusIdx = headers.indexOf('status');
+    var createdIdx = headers.indexOf('created_at');
+    var updatedIdx = headers.indexOf('updated_at');
+    
+    var nowTime = new Date().getTime();
+    var expiryLimitMs = PENDING_EXPIRY_HOURS * 60 * 60 * 1000;
+    var expiredCount = 0;
+    
+    for (var i = 1; i < rows.length; i++) {
+      var row = rows[i];
+      var status = String(row[statusIdx]).trim().toLowerCase();
+      
+      if (status === 'pending' && createdIdx >= 0 && row[createdIdx]) {
+        var createdAt = new Date(row[createdIdx]);
+        if (!isNaN(createdAt.getTime()) && (nowTime - createdAt.getTime()) > expiryLimitMs) {
+          sheet.getRange(i + 1, statusIdx + 1).setValue('Expired');
+          if (updatedIdx >= 0) {
+            sheet.getRange(i + 1, updatedIdx + 1).setValue(getFormattedTimestamp());
+          }
+          expiredCount++;
+        }
+      }
+    }
+    
+    Logger.log('Auto-expire trigger complete. Total expired: ' + expiredCount);
+  } catch (err) {
+    Logger.log('Error in autoExpirePendingBookings: ' + err.toString());
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Install Time-Driven Trigger for Auto-Expiration
+ */
+function installTimeDrivenTriggers() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'autoExpirePendingBookings') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  
+  ScriptApp.newTrigger('autoExpirePendingBookings')
+    .timeBased()
+    .everyHours(1)
+    .create();
+    
+  Logger.log('Hourly time-driven trigger for autoExpirePendingBookings installed successfully.');
 }
 
 /**
@@ -564,7 +628,7 @@ function getActiveBookingsFromSheet(sheet) {
 }
 
 /**
- * 6. Get Homestay Settings
+ * 7. Get Homestay Settings
  */
 function handleGetSettings() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -597,13 +661,12 @@ function handleGetSettings() {
 }
 
 /**
- * Comprehensive Initial Setup Function
- * Run this function once in Google Apps Script editor to create and style all sheets!
+ * One-Click Initial Setup Function
  */
 function initialSetup() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   
-  // 1. Rooms Sheet (Option A: Physical Units with unique IDs)
+  // 1. Rooms Sheet
   var roomSheet = ss.getSheetByName(SHEET_ROOMS) || ss.insertSheet(SHEET_ROOMS);
   roomSheet.clear();
   var roomHeaders = [
@@ -635,7 +698,7 @@ function initialSetup() {
     'Active', nowStr, nowStr
   ]);
   
-  // 2. Bookings Sheet (Full Enterprise Schema)
+  // 2. Bookings Sheet
   var bookSheet = ss.getSheetByName(SHEET_BOOKINGS) || ss.insertSheet(SHEET_BOOKINGS);
   bookSheet.clear();
   var bookHeaders = [
@@ -662,11 +725,14 @@ function initialSetup() {
   settSheet.appendRow(['pending_expiry_hours', PENDING_EXPIRY_HOURS]);
   settSheet.appendRow(['currency', '₹']);
   
-  Logger.log('Nandhanam Elite Google Sheet initial setup successfully completed!');
+  // 4. Install Background Hourly Expiration Trigger
+  installTimeDrivenTriggers();
+  
+  Logger.log('Nandhanam Elite Google Sheet initial setup + background trigger installed!');
 }
 
 /**
- * Timezone Helpers
+ * Timezone & Date Helpers
  */
 function getFormattedTimestamp() {
   return Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd HH:mm:ss');
@@ -686,10 +752,8 @@ function parseDateString(dateVal) {
   var parts = str.split(/[-/]/);
   if (parts.length === 3) {
     if (parts[0].length === 4) {
-      // YYYY-MM-DD
       return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
     } else if (parts[2].length === 4) {
-      // DD-MM-YYYY
       return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
     }
   }
