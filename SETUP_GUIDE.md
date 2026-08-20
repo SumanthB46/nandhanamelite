@@ -95,3 +95,34 @@ The system uses 3 synchronized sheets with permanent audit snapshots:
 - **Pending Expiration**: If a `Pending` request is left unconfirmed for longer than 24 hours, it is treated as expired, automatically freeing the dates for other customers.
 - **Early Checkout**: When a customer checks out early, simply edit the `check_out` date in the `Bookings` sheet. The room immediately becomes available from that date forward.
 - **Cancellation**: Set `status` to `Cancelled`. The row is kept for audit history and the room is immediately released.
+
+---
+
+## 4. Stay Owner Workflow & WhatsApp Confirmation Process
+
+### The Business Flow:
+1. **Website Request**: Customer fills the form & receives **Booking Request Received** screen with ID `BK-YYYYMMDD-XXXX`.
+2. **Pending Hold**: The room is immediately held under `Pending` in the Google Sheet (blocking overlapping searches).
+3. **Owner WhatsApp Outreach**: The owner receives the request (via Sheet / Customer WhatsApp message) and sends payment instructions:
+   ```
+   Hello [Guest Name], thank you for your booking request (ID: BK-20260820-XXXX) at Nandhanam Elite Tourist Home!
+   To confirm your reservation, please pay the total amount of ₹[Total Amount] via UPI: [your-upi-id@okaxis] or scan our QR code.
+   ```
+4. **Payment Verification**: Once the customer completes payment, the owner changes `status` in the `Bookings` sheet from **`Pending`** to **`Confirmed`**.
+5. **Official Booking Confirmation Sent via WhatsApp**: The owner sends the final confirmation to the customer:
+   ```
+   Booking Confirmed ✅
+   Nandhanam Elite Tourist Home
+   ----------------------------------------
+   Booking ID: BK-20260820-XXXX
+   Room: AC Luxury Room
+   Check-in: 25 Aug 2026 (From 2:00 PM)
+   Check-out: 28 Aug 2026 (Until 11:00 AM)
+   Guests: 2 Adults
+   ----------------------------------------
+   Payment received successfully.
+   Your room has been confirmed and allocated!
+   📍 Location: Kaithakod Junction, Vengalloor Bypass, Thodupuzha
+   📞 Contact: +91 94470 00000
+   We look forward to hosting you!
+   ```

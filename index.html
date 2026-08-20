@@ -927,7 +927,7 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-room" id="cancelBookingBtn">CANCEL</button>
           <button type="submit" class="btn btn-primary-gold" id="confirmBookingSubmitBtn">
-            <span class="btn-text">CONFIRM & SUBMIT BOOKING</span>
+            <span class="btn-text">SUBMIT BOOKING REQUEST</span>
             <span class="btn-spinner" style="display:none;">⏳ Processing...</span>
           </button>
         </div>
@@ -935,7 +935,7 @@
     </div>
   </div>
 
-  <!-- 3. BOOKING CONFIRMATION MODAL -->
+  <!-- 3. BOOKING REQUEST RECEIVED MODAL -->
   <div class="custom-modal" id="confirmationModal">
     <div class="modal-backdrop"></div>
     <div class="modal-dialog confirmation-dialog">
@@ -946,14 +946,14 @@
       </div>
 
       <div class="confirmation-header text-center">
-        <span class="modal-eyebrow-green">REQUEST RECEIVED SUCCESSFULLY</span>
-        <h3 class="modal-title">Booking Request Placed</h3>
-        <p class="confirmation-sub">Your stay request has been recorded in the Nandhanam Elite booking database.</p>
+        <span class="modal-eyebrow-green">BOOKING REQUEST RECEIVED</span>
+        <h3 class="modal-title">Request Placed Successfully</h3>
+        <p class="confirmation-sub">Your request is logged under <strong>Pending status</strong> and dates are temporarily held.</p>
       </div>
 
       <div class="booking-id-banner">
         <span class="bid-label">YOUR BOOKING REFERENCE ID</span>
-        <strong class="bid-value" id="confBookingId">NE-202608-1001</strong>
+        <strong class="bid-value" id="confBookingId">BK-20260820-1001</strong>
       </div>
 
       <div class="confirmation-details-table">
@@ -975,22 +975,34 @@
         </div>
         <div class="conf-row">
           <span class="c-key">Guests:</span>
-          <span class="c-val" id="confGuestCount">2 Guests</span>
+          <span class="c-val" id="confGuestCount">2 Adults</span>
         </div>
         <div class="conf-row highlight-price">
           <span class="c-key">Total Estimated Amount:</span>
           <span class="c-val sum-price" id="confTotalPrice">₹4,000</span>
         </div>
         <div class="conf-row">
-          <span class="c-key">Booking Status:</span>
-          <span class="c-val status-pending-chip" id="confStatus">Pending Confirmation</span>
+          <span class="c-key">Current Status:</span>
+          <span class="c-val status-pending-chip" id="confStatus">Pending (Awaiting Payment Verification)</span>
         </div>
       </div>
 
       <div class="next-steps-card">
-        <h4>What Happens Next?</h4>
-        <p>1. Our property manager has received your booking details and will contact you via WhatsApp / Phone to confirm your arrival time.</p>
-        <p>2. Payment is collected directly by the host via UPI or Cash upon arrival.</p>
+        <h4>Next Steps & Confirmation Process</h4>
+        <div class="step-process-list">
+          <div class="step-item active">
+            <span class="step-num">1</span>
+            <div><strong>Request Received</strong> — Your room is held as Pending in our database.</div>
+          </div>
+          <div class="step-item">
+            <span class="step-num">2</span>
+            <div><strong>Payment via WhatsApp</strong> — Our stay owner will contact you with payment instructions (UPI / QR scanner / Bank details).</div>
+          </div>
+          <div class="step-item">
+            <span class="step-num">3</span>
+            <div><strong>Final Booking Confirmation ✅</strong> — Once payment is verified, the owner marks the booking as Confirmed on Google Sheets, allocates your room, and sends your official confirmation via WhatsApp.</div>
+          </div>
+        </div>
       </div>
 
       <div class="confirmation-actions">
@@ -998,7 +1010,7 @@
           <svg class="inline-wa-icon" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.81 13.47 3.81 11.91C3.81 7.37 7.5 3.67 12.05 3.67Z"/>
           </svg>
-          Share on WhatsApp
+          Send Request to Owner on WhatsApp
         </a>
         <button class="btn btn-outline-room" onclick="window.print();">Print / Save Summary</button>
       </div>
