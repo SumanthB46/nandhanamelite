@@ -1,0 +1,16 @@
+# Robots.txt for Nandhanam Elite Tourist Home
+# https://nandhanamelite.com/
+
+User-agent: *
+Allow: /
+Allow: /css/
+Allow: /js/
+Allow: /assets/
+
+# Disallow administrative docs, backend script sources, and test suites
+Disallow: /backend/
+Disallow: /tests/
+Disallow: /docs/
+
+# Sitemap location
+Sitemap: https://nandhanamelite.com/sitemap.xml

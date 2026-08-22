@@ -25,7 +25,7 @@ The system uses 3 synchronized sheets with permanent audit snapshots:
 ### Sheet 2: `Bookings` (With Price Snapshot & Concurrency Protection)
 | Column | Description | Example |
 | :--- | :--- | :--- |
-| `booking_id` | Unique atomic ID | `BK-20260820-4182` |
+| `booking_id` | Unpredictable 8-char atomic ID | `BK-20260821-X7K9M2QF` |
 | `room_id` | Reserved room code | `R001` |
 | `room_name` | Room name at booking time | `AC Luxury Room` |
 | `guest_name` | Full customer name | `Rahul Sharma` |
@@ -40,8 +40,8 @@ The system uses 3 synchronized sheets with permanent audit snapshots:
 | `total_amount` | **Total stay price snapshot** | `4000` |
 | `status` | `Pending`, `Confirmed`, `Cancelled`, `Completed`, `Expired` | `Pending` |
 | `notes` | Special guest requests | `Late check-in around 5 PM` |
-| `created_at` | Timestamp (Asia/Kolkata) | `2026-08-20 14:35:10` |
-| `updated_at` | Timestamp (Asia/Kolkata) | `2026-08-20 14:35:10` |
+| `created_at` | Timestamp (Asia/Kolkata) | `2026-08-21 14:35:10` |
+| `updated_at` | Timestamp (Asia/Kolkata) | `2026-08-21 14:35:10` |
 
 ### Sheet 3: `Settings`
 - `property_name`: `Nandhanam Elite Tourist Home`
@@ -49,7 +49,7 @@ The system uses 3 synchronized sheets with permanent audit snapshots:
 - `whatsapp`: `+91 94470 00000`
 - `email`: `nandhanamelite@gmail.com`
 - `timezone`: `Asia/Kolkata`
-- `pending_expiry_hours`: `24`
+- `pending_expiry_minutes`: `5`
 - `check_in_time`: `2:00 PM`
 - `check_out_time`: `11:00 AM`
 
@@ -57,24 +57,24 @@ The system uses 3 synchronized sheets with permanent audit snapshots:
 
 ## 2. Step-by-Step Setup
 
-### Step 1: Create Spreadsheet
-1. Open [Google Sheets](https://sheets.google.com) and create a new sheet named **`Nandhanam Elite Booking Database`**.
+### Step 1: Open Your Configured Google Sheet
+1. Open your configured Google Sheet: [**Nandhanam Elite Booking Database**](https://docs.google.com/spreadsheets/d/1r17Im3RWjG2fwSsD_RgTVMGcls8aDEYwB25N6ImFujI/edit) (ID: `1r17Im3RWjG2fwSsD_RgTVMGcls8aDEYwB25N6ImFujI`).
 
 ### Step 2: Paste Google Apps Script
-1. In Google Sheets, click **Extensions** > **Apps Script**.
-2. Replace all content in `Code.gs` with the code from [`google_apps_script.js`](./google_apps_script.js).
+1. In the Google Sheet, click **Extensions** > **Apps Script**.
+2. Replace all content in `Code.gs` with the complete code from [`google_apps_script.js`](./google_apps_script.js).
 3. Save the script (`Ctrl + S`).
 
 ### Step 3: Run Initial One-Click Auto-Setup
 1. In the Apps Script toolbar dropdown, choose **`initialSetup`** and click **Run**.
 2. Grant authorization permissions when prompted.
-3. Switch back to your Google Sheet: all 3 tabs (`Rooms`, `Bookings`, `Settings`) will be created and formatted with gold styling and initial active room listings.
+3. Switch back to your Google Sheet: all 3 tabs (`Rooms`, `Bookings`, `Settings`) will be created and formatted with gold styling and initial active room listings, and a 5-minute background auto-expiry trigger will be installed.
 
 ### Step 4: Deploy as Web App API
 1. Click **Deploy** (top right) > **New deployment**.
 2. Select type: **Web app**.
 3. Configuration:
-   - **Description**: `Nandhanam Elite Booking Engine API v2`
+   - **Description**: `Nandhanam Elite Booking Engine API v2.3`
    - **Execute as**: `Me (your-email@gmail.com)`
    - **Who has access**: `Anyone` *(Allows frontend availability queries and booking requests)*
 4. Click **Deploy** and copy your **Web App URL**.
@@ -88,13 +88,13 @@ The system uses 3 synchronized sheets with permanent audit snapshots:
 
 ---
 
-## 3. How Concurrency & Rules Work
+## 3. How Concurrency & Security Work
 
-- **Atomic Lock (`LockService`)**: When a guest submits a booking, the script acquires a script lock for up to 15 seconds. It reads current bookings, checks date overlaps, snapshots the current room price from the `Rooms` sheet, generates `BK-YYYYMMDD-XXXX`, appends the row, and releases the lock. Two concurrent guests can never double-book the same room.
-- **Pending Blocks Availability**: `Pending` and `Confirmed` reservations block date overlaps.
-- **Pending Expiration**: If a `Pending` request is left unconfirmed for longer than 24 hours, it is treated as expired, automatically freeing the dates for other customers.
+- **Atomic Lock (`LockService`)**: When a guest submits a booking, the script acquires a script lock for up to 15 seconds. It reads current bookings, checks date overlaps, snapshots the current room price from the `Rooms` sheet, generates an unguessable token `BK-YYYYMMDD-XXXXXXXX`, appends the row, and releases the lock. Two concurrent guests can never double-book the same room.
+- **5-Minute Temporary Hold**: `Pending` requests reserve the room for exactly 5 minutes while the customer contacts the owner. If payment is verified, the stay owner changes `status` to `Confirmed` in Google Sheets. If unconfirmed after 5 minutes, the room is automatically released in real-time.
+- **Strict Owner-Only Status Control**: The public API strictly accepts booking creations. Status changes (`Pending` → `Confirmed`, `Cancelled`) can only be performed by the stay owner directly in the Google Sheet, preventing any customer or bot from self-confirming or cancelling bookings.
 - **Early Checkout**: When a customer checks out early, simply edit the `check_out` date in the `Bookings` sheet. The room immediately becomes available from that date forward.
-- **Cancellation**: Set `status` to `Cancelled`. The row is kept for audit history and the room is immediately released.
+- **Cancellation**: Set `status` to `Cancelled` in the Sheet. The row is kept for audit history and the room is immediately released.
 
 ---
 
