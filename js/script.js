@@ -23,31 +23,21 @@ const ROOMS_DATA = {
     id: 'R001',
     name: 'AC Luxury Room',
     tag: 'AIR CONDITIONED',
-    price: 2000,
+    price: 1699,
     capacity: 2,
     img: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80',
     desc: 'Spacious climate-controlled room featuring plush queen bedding, modern attached bathroom with hot water, and quiet garden ambience. Ideal for couples, solo business executives, and small families.',
-    amenities: ['Air Conditioning', 'King / Queen Bed', 'Attached Bathroom', '24/7 Hot Water', 'High-Speed Wi-Fi', 'Daily Housekeeping', 'Power Backup']
+    amenities: ['Air Conditioning', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water', 'High-Speed Wi-Fi', 'Daily housekeeping / cleaning on req']
   },
   'R002': {
     id: 'R002',
     name: 'Non AC Comfort Room',
     tag: 'NATURAL VENTILATION',
-    price: 1500,
+    price: 1299,
     capacity: 2,
     img: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80',
     desc: 'Well-ventilated, breezy double bedroom designed for budget-conscious travellers seeking clean, comfortable accommodation in central Thodupuzha.',
-    amenities: ['Natural Cross-Ventilation', 'Comfortable Double Bed', 'Attached Bathroom', 'Hot Water on Demand', 'High-Speed Wi-Fi', 'Ceiling Fan', 'Daily Housekeeping']
-  },
-  'R003': {
-    id: 'R003',
-    name: 'Family Executive Suite',
-    tag: 'FAMILY SUITE',
-    price: 3200,
-    capacity: 4,
-    img: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80',
-    desc: 'Expansive private suite with 2 double beds, AC, lounge sitting area, and private balcony overlooking lush greenery. Perfectly suited for families and small travel groups.',
-    amenities: ['Air Conditioning', '2 Queen Double Beds', 'Private Balcony', 'Attached Bathroom', 'Hot Water', 'High-Speed Wi-Fi', 'Living Lounge', 'Power Backup']
+    amenities: ['Natural Cross-Ventilation', 'TV in every room', 'Attached Bathroom', 'Hot Water on Demand', 'High-Speed Wi-Fi', 'Ceiling Fan', 'Daily housekeeping / cleaning on req']
   }
 };
 
@@ -66,8 +56,8 @@ const LOCAL_BOOKINGS_STORE = [
     adults: 2,
     children: 0,
     total_guests: 2,
-    price_per_night: 2000,
-    total_amount: 4000,
+    price_per_night: 1699,
+    total_amount: 3398,
     status: 'Confirmed',
     notes: 'Airport pickup enquiry',
     created_at: new Date().toISOString(),
@@ -89,10 +79,40 @@ function formatDate(date) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+/**
+ * Format date string to Indian/Universal Clean Display (e.g. "26 Aug 2026")
+ */
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return '';
+  const d = parseDate(dateStr);
+  if (!d || Number.isNaN(d.getTime())) return String(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = monthNames[d.getMonth()];
+  const year = d.getFullYear();
+  return `${day} ${month} ${year}`;
+}
+
 function parseDate(dateStr) {
   if (!dateStr) return null;
-  const parts = dateStr.split('-');
-  return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+
+  const str = String(dateStr).trim();
+  if (!str) return null;
+
+  const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+  }
+
+  const slashMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (slashMatch) {
+    const [, day, month, year] = slashMatch;
+    return new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+  }
+
+  const timeDate = new Date(str);
+  return Number.isNaN(timeDate.getTime()) ? null : timeDate;
 }
 
 function calculateNights(inStr, outStr) {
@@ -670,7 +690,7 @@ window.checkAvailabilityAction = async function (shouldScroll = true) {
         banner.className = 'availability-status-banner';
         if (bannerIcon) bannerIcon.textContent = '✓';
         if (bannerTitle) bannerTitle.textContent = `${availableCount} Room ${availableCount === 1 ? 'Option' : 'Options'} Available`;
-        if (bannerDesc) bannerDesc.textContent = `Stay for ${nights} ${nights === 1 ? 'Night' : 'Nights'} (${checkin} to ${checkout}) for ${guests} ${guests === 1 ? 'Guest' : 'Guests'}.`;
+        if (bannerDesc) bannerDesc.textContent = `Stay for ${nights} ${nights === 1 ? 'Night' : 'Nights'} (${formatDisplayDate(checkin)} to ${formatDisplayDate(checkout)}) for ${guests} ${guests === 1 ? 'Guest' : 'Guests'}.`;
       } else {
         banner.className = 'availability-status-banner error';
         if (bannerIcon) bannerIcon.textContent = '✕';
@@ -1316,9 +1336,14 @@ function showConfirmationModal(details) {
   if (roomEl) roomEl.textContent = details.room_name || details.room_id;
   if (nameEl) nameEl.textContent = details.guest_name;
   if (phoneEl) phoneEl.textContent = details.phone || details.guest_phone;
-  if (datesEl) datesEl.textContent = `${details.check_in} to ${details.check_out} (${details.total_nights} Nights)`;
+  if (datesEl) datesEl.textContent = `${formatDisplayDate(details.check_in)} to ${formatDisplayDate(details.check_out)} (${details.total_nights} ${details.total_nights === 1 ? 'Night' : 'Nights'})`;
   if (guestsEl) guestsEl.textContent = guestBreakdown;
   if (priceEl) priceEl.textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
+
+  const formattedIn = formatDisplayDate(details.check_in);
+  const formattedOut = formatDisplayDate(details.check_out);
+  const advanceAmount = 500;
+  const balanceAmount = Math.max(0, totalAmount - advanceAmount);
 
   // Build WhatsApp share message
   const waMessage =
@@ -1328,12 +1353,14 @@ function showConfirmationModal(details) {
     `• *Room:* ${encodeURIComponent(details.room_name || details.room_id)}%0A` +
     `• *Guest Name:* ${encodeURIComponent(details.guest_name)}%0A` +
     `• *Phone:* ${encodeURIComponent(details.phone || details.guest_phone)}%0A` +
-    `• *Check-in:* ${encodeURIComponent(details.check_in)}%0A` +
-    `• *Check-out:* ${encodeURIComponent(details.check_out)} (${details.total_nights} Nights)%0A` +
+    `• *Check-in:* ${encodeURIComponent(formattedIn)}%0A` +
+    `• *Check-out:* ${encodeURIComponent(formattedOut)} (${details.total_nights} Nights)%0A` +
     `• *Guests:* ${encodeURIComponent(guestBreakdown)}%0A` +
-    `• *Total Amount (Snapshot):* ₹${totalAmount.toLocaleString('en-IN')}%0A` +
+    `• *Total Stay Amount:* ₹${totalAmount.toLocaleString('en-IN')}%0A` +
+    `• *Confirmation Advance Required:* ₹${advanceAmount.toLocaleString('en-IN')}%0A` +
+    `• *Balance at Check-in:* ₹${balanceAmount.toLocaleString('en-IN')}%0A` +
     `----------------------------------------%0A` +
-    `Hello, I have submitted this booking request on your website. Please confirm availability and share payment/check-in details.`;
+    `Hello, I have submitted this booking request on your website. Please share UPI payment details to complete the ₹500 advance and confirm my stay.`;
 
   if (waBtn) {
     waBtn.href = `https://wa.me/${PROPERTY_WA_NUMBER}?text=${waMessage}`;

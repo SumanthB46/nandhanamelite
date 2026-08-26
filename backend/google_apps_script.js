@@ -773,23 +773,16 @@ function initialSetup() {
   var nowStr = getFormattedTimestamp();
   roomSheet.appendRow([
     'R001', 'AC Luxury Room',
-    'Spacious air-conditioned room with king-size bed, private attached modern bathroom, and scenic view.',
-    2000, 2, 'Air Conditioning, King Bed, Attached Bathroom, 24/7 Hot Water, High-Speed Wi-Fi, Daily Housekeeping',
+    'Spacious air-conditioned room (8 rooms in property) with plush bedding, private modern attached bathroom, TV in every room, and scenic view.',
+    1699, 2, 'Air Conditioning, TV in every room, Attached Bathroom, 24/7 Hot Water, High-Speed Wi-Fi, Daily housekeeping / cleaning on req',
     'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
     'Active', nowStr, nowStr
   ]);
   roomSheet.appendRow([
     'R002', 'Non AC Comfort Room',
-    'Well-ventilated comfortable double bedroom with attached bathroom and work desk.',
-    1500, 2, 'Natural Ventilation, Comfortable Double Bed, Attached Bathroom, Hot Water, Wi-Fi, Daily Housekeeping',
+    'Well-ventilated comfortable double bedroom (8 rooms in property) with attached bathroom, TV in every room, and work desk.',
+    1299, 2, 'Natural Ventilation, TV in every room, Attached Bathroom, Hot Water, Wi-Fi, Daily housekeeping / cleaning on req',
     'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=900&q=80',
-    'Active', nowStr, nowStr
-  ]);
-  roomSheet.appendRow([
-    'R003', 'Family Executive Suite',
-    'Large suite ideal for families with 2 double beds, AC, and private living area with balcony.',
-    3200, 4, 'Air Conditioning, 2 Queen Beds, Attached Bathroom, Private Balcony, Hot Water, High-Speed Wi-Fi, Living Area',
-    'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80',
     'Active', nowStr, nowStr
   ]);
 
@@ -810,6 +803,12 @@ function initialSetup() {
   settSheet.getRange(1, 1, 1, 2).setValues([['Setting', 'Value']])
     .setFontWeight('bold').setBackground('#C5A880');
   settSheet.appendRow(['property_name', 'Nandhanam Elite Tourist Home']);
+  settSheet.appendRow(['total_rooms', '16']);
+  settSheet.appendRow(['ac_rooms', '8']);
+  settSheet.appendRow(['non_ac_rooms', '8']);
+  settSheet.appendRow(['advance_required', '₹500']);
+  settSheet.appendRow(['cancellation_policy', 'Free cancellation upto 48hrs before check-in']);
+  settSheet.appendRow(['housekeeping', 'Daily housekeeping / cleaning on req']);
   settSheet.appendRow(['phone', '+91 94470 00000']);
   settSheet.appendRow(['whatsapp', '+91 94470 00000']);
   settSheet.appendRow(['email', 'nandhanamelite@gmail.com']);

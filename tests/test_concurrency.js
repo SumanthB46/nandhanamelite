@@ -20,10 +20,9 @@ const assert = require('assert');
 
 // Mock Database
 let ROOMS = {
-  'R001': { id: 'R001', name: 'AC Luxury Room', price_per_night: 2000, capacity: 2, status: 'Active' },
-  'R002': { id: 'R002', name: 'Non AC Comfort Room', price_per_night: 1500, capacity: 2, status: 'Active' },
-  'R003': { id: 'R003', name: 'Family Executive Suite', price_per_night: 3200, capacity: 4, status: 'Active' },
-  'R004_INACTIVE': { id: 'R004_INACTIVE', name: 'Under Renovation Room', price_per_night: 1800, capacity: 2, status: 'Inactive' }
+  'R001': { id: 'R001', name: 'AC Luxury Room', price_per_night: 1699, capacity: 2, status: 'Active' },
+  'R002': { id: 'R002', name: 'Non AC Comfort Room', price_per_night: 1299, capacity: 2, status: 'Active' },
+  'R003_INACTIVE': { id: 'R003_INACTIVE', name: 'Under Renovation Room', price_per_night: 1500, capacity: 2, status: 'Inactive' }
 };
 
 let BOOKINGS = [];
@@ -376,7 +375,7 @@ async function runVerificationSuite() {
 
   const resInactive = await serverDoPost({
     action: 'createBooking',
-    room_id: 'R004_INACTIVE',
+    room_id: 'R003_INACTIVE',
     check_in: '2026-11-01',
     check_out: '2026-11-03',
     guest_name: 'Guest Inactive',
