@@ -743,6 +743,8 @@ function handleGetSettings() {
         if (key) {
           if (val instanceof Date) {
             val = Utilities.formatDate(val, TIMEZONE, "hh:mm a");
+          } else if (typeof val === 'string' && (val.indexOf('#ERROR') >= 0 || val.indexOf('#REF') >= 0 || val.indexOf('#VALUE') >= 0)) {
+            val = settings[key] || '';
           }
           settings[key] = val;
         }
@@ -809,8 +811,8 @@ function initialSetup() {
   settSheet.appendRow(['advance_required', '₹500']);
   settSheet.appendRow(['cancellation_policy', 'Free cancellation upto 48hrs before check-in']);
   settSheet.appendRow(['housekeeping', 'Daily housekeeping / cleaning on req']);
-  settSheet.appendRow(['phone', '+91 94470 00000']);
-  settSheet.appendRow(['whatsapp', '+91 94470 00000']);
+  settSheet.appendRow(['phone', "'+91 94470 00000"]);
+  settSheet.appendRow(['whatsapp', "'+91 94470 00000"]);
   settSheet.appendRow(['email', 'nandhanamelite@gmail.com']);
   settSheet.appendRow(['address', 'Kaithakod Junction, Vengalloor – Mangattukavala Bypass Road, Thodupuzha East PO, Pin: 685585, Kerala, India']);
   settSheet.appendRow(['check_in_time', '2:00 PM']);
