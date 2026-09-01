@@ -10,9 +10,8 @@ A direct-reservation web application and Google Sheets management system for **N
 nandhanamelite/
 ├── assets/
 │   └── images/
-│       ├── Logo.png             # Official high-resolution brand logo
-│       ├── logo-full.svg        # Scalable typography vector logo
-│       └── logo-emblem.svg      # Scalable compact emblem vector logo
+│       ├── Logo.png             # Official high-resolution brand logo (used in footer & branding)
+│       └── navlogo.png          # Navigation bar brand logo
 ├── css/
 │   └── style.css                # Pure Vanilla CSS luxury design system
 ├── js/
@@ -22,8 +21,6 @@ nandhanamelite/
 ├── docs/
 │   ├── OWNER_GUIDE.md           # Visual, non-technical control panel manual for property owners
 │   └── SETUP_GUIDE.md           # Developer setup & Google Apps Script deployment instructions
-├── tests/
-│   └── test_concurrency.js      # 10-point automated security, race condition & formula injection test suite
 ├── index.html                   # Semantic HTML5 frontend with full Meta SEO & JSON-LD Schemas
 ├── manifest.json                # PWA / Mobile Web App manifest configuration
 ├── robots.txt                   # Crawler indexing directives for Googlebot, Bingbot, etc.
