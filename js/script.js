@@ -309,33 +309,49 @@ function renderRoomsGrid(rooms) {
 }
 
 /**
+ * Format raw phone number into display (+91 94477 36460), tel link (+919447736460), and WhatsApp (919447736460)
+ */
+function formatPhoneDetails(val) {
+  if (!val) {
+    return {
+      display: '+91 94477 36460',
+      tel: '+919447736460',
+      wa: '919447736460'
+    };
+  }
+  const digits = String(val).replace(/\D/g, '');
+  const tenDigits = digits.length >= 10 ? digits.slice(-10) : (digits || '9447736460');
+  return {
+    display: `+91 ${tenDigits.slice(0, 5)} ${tenDigits.slice(5)}`,
+    tel: `+91${tenDigits}`,
+    wa: `91${tenDigits}`
+  };
+}
+
+/**
  * Apply Property Settings dynamically to the DOM
  */
 function applySettingsToDOM(settings) {
   if (!settings) return;
 
-  const phone = settings.phone || settings.whatsapp;
-  const whatsapp = settings.whatsapp || settings.phone;
-  const cleanWa = whatsapp ? String(whatsapp).replace(/[^0-9]/g, '') : '919447736460';
+  const phoneInfo = formatPhoneDetails(settings.phone || settings.whatsapp);
+  const waInfo = formatPhoneDetails(settings.whatsapp || settings.phone);
 
   // Update WhatsApp links
   const waLinks = document.querySelectorAll('a[href*="wa.me"]');
   waLinks.forEach(link => {
-    link.href = `https://wa.me/${cleanWa}?text=Hello%20Nandhanam%20Elite,%20I%20would%20like%20to%20enquire%20about%20room%20availability.`;
+    link.href = `https://wa.me/${waInfo.wa}?text=Hello%20Nandhanam%20Elite,%20I%20would%20like%20to%20enquire%20about%20room%20availability.`;
   });
 
   // Update phone tel: links and text
-  if (phone) {
-    const cleanPhone = String(phone).replace(/[^\d+]/g, '');
-    const telLinks = document.querySelectorAll('a[href*="tel:"]');
-    telLinks.forEach(link => {
-      link.href = `tel:${cleanPhone}`;
-    });
-    const phoneValEls = document.querySelectorAll('.footer-info-val');
-    phoneValEls.forEach(el => el.textContent = phone);
-    const helplineCallEl = document.querySelector('.btn-helpline-call span');
-    if (helplineCallEl) helplineCallEl.textContent = `📞 Call ${phone}`;
-  }
+  const telLinks = document.querySelectorAll('a[href*="tel:"]');
+  telLinks.forEach(link => {
+    link.href = `tel:${phoneInfo.tel}`;
+  });
+  const phoneValEls = document.querySelectorAll('.footer-info-val');
+  phoneValEls.forEach(el => el.textContent = phoneInfo.display);
+  const helplineCallEl = document.querySelector('.btn-helpline-call span');
+  if (helplineCallEl) helplineCallEl.textContent = `📞 Call ${phoneInfo.display}`;
 
   // Update check-in / check-out hints cleanly (preventing 1899 epoch strings)
   const checkinTime = formatTimeClean(settings.check_in_time, '24-Hour Flexible Check-in');

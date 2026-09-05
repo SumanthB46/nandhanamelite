@@ -23,6 +23,32 @@ var TIMEZONE = 'Asia/Kolkata';
 var PENDING_EXPIRY_MINUTES = 5; // Strict 5-minute reservation hold window
 
 /**
+ * Safe Spreadsheet Resolver (Works for both Container-Bound scripts and Standalone scripts)
+ */
+function getTargetSpreadsheet() {
+  try {
+    var active = SpreadsheetApp.getActiveSpreadsheet();
+    if (active && active.getId()) return active;
+  } catch (e) {}
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
+}
+
+/**
+ * Quick Diagnostics & Authorization Test Function
+ * Run this first to test permissions without modifying any sheets
+ */
+function testConnection() {
+  Logger.log('🔍 Testing Apps Script environment and connection...');
+  try {
+    var ss = getTargetSpreadsheet();
+    Logger.log('✅ Connected successfully to Spreadsheet: "' + ss.getName() + '" (ID: ' + ss.getId() + ')');
+    Logger.log('✅ Google Apps Script permissions are valid and operational.');
+  } catch (err) {
+    Logger.log('❌ Connection error: ' + err.toString());
+  }
+}
+
+/**
  * Standard Error Codes Reference:
  * - VALIDATION_ERROR: Missing or invalid input fields
  * - INVALID_ACTION: Unknown GET or POST action
@@ -780,8 +806,8 @@ function getNotificationSettings(ss) {
   var sheet = targetSS.getSheetByName(SHEET_SETTINGS);
   var config = {
     property_name: 'Nandhanam Elite Tourist Home',
-    phone: '+91 94477 36460',
-    whatsapp: '+91 94477 36460',
+    phone: '9447736460',
+    whatsapp: '9447736460',
     email: 'nandhanamelite@gmail.com',
     admin_notification_email: '', // Defaults to script user / settings email
     callmebot_phone: '',          // Phone with country code (e.g., 919447736460)
@@ -855,11 +881,34 @@ function sendAdminNotificationEmail(b, settings) {
 }
 
 /**
+ * Format raw phone number into clean display (+91 94477 36460)
+ */
+function formatDisplayPhone(val) {
+  if (!val) return '+91 94477 36460';
+  var digits = String(val).replace(/[^0-9]/g, '');
+  if (digits.length >= 10) {
+    var ten = digits.slice(-10);
+    return '+91 ' + ten.slice(0, 5) + ' ' + ten.slice(5);
+  }
+  return String(val);
+}
+
+/**
+ * Clean digits for WhatsApp URL (919447736460)
+ */
+function cleanWaNumber(val) {
+  var digits = String(val || '919447736460').replace(/[^0-9]/g, '');
+  if (digits.length === 10) return '91' + digits;
+  return digits || '919447736460';
+}
+
+/**
  * Sends HTML Reservation Receipt Email to Guest
  */
 function sendGuestReceiptEmail(b, settings) {
   var subject = 'Reservation Request Received (' + b.booking_id + ') - ' + settings.property_name;
-  var waClean = String(settings.whatsapp || settings.phone || '').replace(/[^0-9]/g, '');
+  var waClean = cleanWaNumber(settings.whatsapp || settings.phone);
+  var helplineDisplay = formatDisplayPhone(settings.phone || settings.whatsapp);
 
   var htmlBody =
     '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; color: #1F2937;">' +
@@ -887,7 +936,7 @@ function sendGuestReceiptEmail(b, settings) {
         '<div style="text-align: center; margin: 24px 0;">' +
           '<a href="https://wa.me/' + waClean + '?text=Hi%2C%20I%20have%20submitted%20booking%20' + encodeURIComponent(b.booking_id) + '%20for%20' + encodeURIComponent(b.room_name) + '." style="background-color: #25D366; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Chat with Host on WhatsApp</a>' +
         '</div>' +
-        '<p style="font-size: 13px; color: #6B7280;">Address: ' + (settings.address || 'Kaithakod Junction, Thodupuzha East PO, Kerala') + '<br>Contact: ' + (settings.phone || '') + '</p>' +
+        '<p style="font-size: 13px; color: #6B7280;">Address: ' + (settings.address || 'Kaithakod Junction, Thodupuzha East PO, Kerala') + '<br>Contact: ' + helplineDisplay + '</p>' +
       '</div>' +
       '<div style="background-color: #F9FAFB; padding: 16px; text-align: center; font-size: 12px; color: #9CA3AF; border-top: 1px solid #E5E7EB;">' +
         'Thank you for staying with us &bull; Nandhanam Elite Homestay' +
@@ -990,7 +1039,8 @@ function notifyCustomerBookingConfirmed(b, settings) {
  */
 function sendCustomerBookingConfirmedEmail(b, settings) {
   var subject = '🎉 BOOKING CONFIRMED: ' + b.room_name + ' (' + b.booking_id + ') - ' + settings.property_name;
-  var waClean = String(settings.whatsapp || settings.phone || '').replace(/[^0-9]/g, '');
+  var waClean = cleanWaNumber(settings.whatsapp || settings.phone);
+  var helplineDisplay = formatDisplayPhone(settings.phone || settings.whatsapp);
   var totalFormatted = Number(b.total_amount || 0).toLocaleString('en-IN');
   var advanceNum = Number(b.advance_paid || 500);
   var advanceFormatted = advanceNum.toLocaleString('en-IN');
@@ -1030,7 +1080,7 @@ function sendCustomerBookingConfirmedEmail(b, settings) {
         '<div style="text-align: center; margin: 24px 0;">' +
           '<a href="https://wa.me/' + waClean + '?text=Hi%2C%20regarding%20my%20confirmed%20booking%20' + encodeURIComponent(b.booking_id) + '" style="background-color: #25D366; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Message Host on WhatsApp</a>' +
         '</div>' +
-        '<p style="font-size: 13px; color: #64748B; text-align: center;">Need to update your dates or have questions? Contact Helpline: <strong>' + (settings.phone || settings.whatsapp || '') + '</strong></p>' +
+        '<p style="font-size: 13px; color: #64748B; text-align: center;">Need to update your dates or have questions? Contact Helpline: <strong>' + helplineDisplay + '</strong></p>' +
       '</div>' +
       '<div style="background-color: #F8FAFC; padding: 16px; text-align: center; font-size: 12px; color: #94A3B8; border-top: 1px solid #E2E8F0;">' +
         'Nandhanam Elite Tourist Home &bull; Official Confirmation Voucher &bull; ' + getFormattedTimestamp() +
@@ -1049,7 +1099,8 @@ function sendCustomerBookingConfirmedEmail(b, settings) {
  * Sends Automated WhatsApp Confirmation to Customer via Webhook
  */
 function sendCustomerWhatsAppConfirmation(b, settings) {
-  var waClean = String(settings.whatsapp || settings.phone || '').replace(/[^0-9]/g, '');
+  var waClean = cleanWaNumber(settings.whatsapp || settings.phone);
+  var helplineDisplay = formatDisplayPhone(settings.phone || settings.whatsapp);
   var advanceNum = Number(b.advance_paid || 500);
   var balanceNum = Math.max(0, Number(b.total_amount || 0) - advanceNum);
   var isFullyPaid = balanceNum === 0;
@@ -1068,7 +1119,7 @@ function sendCustomerWhatsAppConfirmation(b, settings) {
     '• *Amount Paid:* ₹' + advanceNum.toLocaleString('en-IN') + (isFullyPaid ? ' (Full Payment ✅)' : '') + '\n' +
     '• *Balance at Check-in:* ' + (isFullyPaid ? '₹0 (Paid in Full)' : '₹' + balanceNum.toLocaleString('en-IN')) + '\n\n' +
     '📍 *Address:* ' + (settings.address || 'Kaithakod Junction, Thodupuzha East PO, Kerala') + '\n' +
-    '📞 *Helpline:* ' + (settings.phone || settings.whatsapp || '') + '\n' +
+    '📞 *Helpline:* ' + helplineDisplay + '\n' +
     '----------------------------------------\n' +
     'We look forward to hosting you at Nandhanam Elite!';
 
@@ -1241,8 +1292,8 @@ function handleGetSettings() {
     var sheet = ss.getSheetByName(SHEET_SETTINGS);
     var settings = {
       property_name: 'Nandhanam Elite Tourist Home',
-      phone: '+91 94477 36460',
-      whatsapp: '+91 94477 36460',
+      phone: '9447736460',
+      whatsapp: '9447736460',
       email: 'nandhanamelite@gmail.com',
       admin_notification_email: 'nandhanamelite@gmail.com',
       callmebot_phone: '',
@@ -1297,8 +1348,8 @@ function syncSettingsSheet() {
   settSheet.appendRow(['advance_required', '₹500']);
   settSheet.appendRow(['cancellation_policy', 'Free cancellation upto 48hrs before check-in']);
   settSheet.appendRow(['housekeeping', 'Daily housekeeping / cleaning on req']);
-  settSheet.appendRow(['phone', '+91 94477 36460']);
-  settSheet.appendRow(['whatsapp', '+91 94477 36460']);
+  settSheet.appendRow(['phone', '9447736460']);
+  settSheet.appendRow(['whatsapp', '9447736460']);
   settSheet.appendRow(['email', 'nandhanamelite@gmail.com']);
   settSheet.appendRow(['admin_notification_email', 'nandhanamelite@gmail.com']);
   settSheet.appendRow(['callmebot_phone', '919447736460']);
@@ -1313,126 +1364,133 @@ function syncSettingsSheet() {
   settSheet.appendRow(['pending_expiry_minutes', PENDING_EXPIRY_MINUTES]);
   settSheet.appendRow(['currency', '₹']);
 
-  Logger.log('✅ Settings sheet successfully refreshed and fixed with +91 94477 36460!');
+  Logger.log('✅ Settings sheet successfully refreshed!');
 }
 
 /**
  * One-Click Initial Setup Function
  */
 function initialSetup() {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  Logger.log('🚀 Starting Nandhanam Elite initialSetup...');
+  try {
+    var ss = getTargetSpreadsheet();
+    Logger.log('Connected to Sheet: "' + ss.getName() + '" (ID: ' + ss.getId() + ')');
 
-  // 1. Rooms Sheet
-  var roomSheet = ss.getSheetByName(SHEET_ROOMS) || ss.insertSheet(SHEET_ROOMS);
-  roomSheet.clear();
-  var roomHeaders = [
-    'room_id', 'room_name', 'description', 'price_per_night', 'capacity', 'amenities', 'image_url', 'status', 'created_at', 'updated_at'
-  ];
-  roomSheet.getRange(1, 1, 1, roomHeaders.length).setValues([roomHeaders])
-    .setFontWeight('bold').setBackground('#E2C48C');
+    // 1. Rooms Sheet
+    var roomSheet = ss.getSheetByName(SHEET_ROOMS) || ss.insertSheet(SHEET_ROOMS);
+    roomSheet.clear();
+    var roomHeaders = [
+      'room_id', 'room_name', 'description', 'price_per_night', 'capacity', 'amenities', 'image_url', 'status', 'created_at', 'updated_at'
+    ];
+    roomSheet.getRange(1, 1, 1, roomHeaders.length).setValues([roomHeaders])
+      .setFontWeight('bold').setBackground('#E2C48C');
 
-  var nowStr = getFormattedTimestamp();
-  roomSheet.appendRow([
-    'R001', 'AC Room',
-    'Spacious air-conditioned room (8 rooms in property) with plush bedding, private modern attached bathroom, TV in every room, and scenic view.',
-    1699, 2, 'Air Conditioning, TV in every room, Attached Bathroom, 24/7 Hot Water, High-Speed Wi-Fi, Daily housekeeping / cleaning on req',
-    'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
-    'Active', nowStr, nowStr
-  ]);
-  roomSheet.appendRow([
-    'R002', 'Non AC Comfort Room',
-    'Well-ventilated comfortable double bedroom (8 rooms in property) with attached bathroom, TV in every room, and work desk.',
-    1299, 2, 'Natural Ventilation, TV in every room, Attached Bathroom, 24/7 Hot Water, Wi-Fi, Daily housekeeping / cleaning on req',
-    'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=900&q=80',
-    'Active', nowStr, nowStr
-  ]);
+    var nowStr = getFormattedTimestamp();
+    roomSheet.appendRow([
+      'R001', 'AC Room',
+      'Spacious air-conditioned room (8 rooms in property) with plush bedding, private modern attached bathroom, TV in every room, and scenic view.',
+      1699, 2, 'Air Conditioning, TV in every room, Attached Bathroom, 24/7 Hot Water, High-Speed Wi-Fi, Daily housekeeping / cleaning on req',
+      'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
+      'Active', nowStr, nowStr
+    ]);
+    roomSheet.appendRow([
+      'R002', 'Non AC Comfort Room',
+      'Well-ventilated comfortable double bedroom (8 rooms in property) with attached bathroom, TV in every room, and work desk.',
+      1299, 2, 'Natural Ventilation, TV in every room, Attached Bathroom, 24/7 Hot Water, Wi-Fi, Daily housekeeping / cleaning on req',
+      'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=900&q=80',
+      'Active', nowStr, nowStr
+    ]);
 
-  // 2. Bookings Sheet
-  var bookSheet = ss.getSheetByName(SHEET_BOOKINGS) || ss.insertSheet(SHEET_BOOKINGS);
-  bookSheet.clear();
-  var bookHeaders = [
-    'booking_id', 'room_id', 'room_name', 'guest_name', 'phone', 'email',
-    'check_in', 'check_out', 'adults', 'children', 'total_guests',
-    'price_per_night', 'total_amount', 'status', 'notes', 'created_at', 'updated_at'
-  ];
-  bookSheet.getRange(1, 1, 1, bookHeaders.length).setValues([bookHeaders])
-    .setFontWeight('bold').setBackground('#D4AF37');
+    // 2. Bookings Sheet
+    var bookSheet = ss.getSheetByName(SHEET_BOOKINGS) || ss.insertSheet(SHEET_BOOKINGS);
+    bookSheet.clear();
+    var bookHeaders = [
+      'booking_id', 'room_id', 'room_name', 'guest_name', 'phone', 'email',
+      'check_in', 'check_out', 'adults', 'children', 'total_guests',
+      'price_per_night', 'total_amount', 'status', 'notes', 'created_at', 'updated_at'
+    ];
+    bookSheet.getRange(1, 1, 1, bookHeaders.length).setValues([bookHeaders])
+      .setFontWeight('bold').setBackground('#D4AF37');
 
-  // 3. Settings Sheet
-  var settSheet = ss.getSheetByName(SHEET_SETTINGS) || ss.insertSheet(SHEET_SETTINGS);
-  settSheet.clear();
-  settSheet.getRange('A1:B50').setNumberFormat('@'); // Enforce Plain Text to prevent formula parse errors
-  settSheet.getRange(1, 1, 1, 2).setValues([['Setting', 'Value']])
-    .setFontWeight('bold').setBackground('#C5A880');
-  settSheet.appendRow(['property_name', 'Nandhanam Elite Tourist Home']);
-  settSheet.appendRow(['total_rooms', '16']);
-  settSheet.appendRow(['ac_rooms', '8']);
-  settSheet.appendRow(['non_ac_rooms', '8']);
-  settSheet.appendRow(['advance_required', '₹500']);
-  settSheet.appendRow(['cancellation_policy', 'Free cancellation upto 48hrs before check-in']);
-  settSheet.appendRow(['housekeeping', 'Daily housekeeping / cleaning on req']);
-  settSheet.appendRow(['phone', '+91 94477 36460']);
-  settSheet.appendRow(['whatsapp', '+91 94477 36460']);
-  settSheet.appendRow(['email', 'nandhanamelite@gmail.com']);
-  settSheet.appendRow(['admin_notification_email', 'nandhanamelite@gmail.com']);
-  settSheet.appendRow(['callmebot_phone', '919447736460']);
-  settSheet.appendRow(['callmebot_apikey', '']);
-  settSheet.appendRow(['whatsapp_webhook_url', '']);
-  settSheet.appendRow(['instagram', 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==']);
-  settSheet.appendRow(['facebook', 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr']);
-  settSheet.appendRow(['address', 'Kaithakod Junction, Vengalloor – Mangattukavala Bypass Road, Thodupuzha East PO, Pin: 685585, Kerala, India']);
-  settSheet.appendRow(['check_in_time', 'Flexible (24-Hour Cycle)']);
-  settSheet.appendRow(['check_out_time', '24 Hours from Check-in']);
-  settSheet.appendRow(['timezone', TIMEZONE]);
-  settSheet.appendRow(['pending_expiry_minutes', PENDING_EXPIRY_MINUTES]);
-  settSheet.appendRow(['currency', '₹']);
+    // 3. Settings Sheet
+    var settSheet = ss.getSheetByName(SHEET_SETTINGS) || ss.insertSheet(SHEET_SETTINGS);
+    settSheet.clear();
+    settSheet.getRange('A1:B50').setNumberFormat('@'); // Enforce Plain Text to prevent formula parse errors
+    settSheet.getRange(1, 1, 1, 2).setValues([['Setting', 'Value']])
+      .setFontWeight('bold').setBackground('#C5A880');
+    settSheet.appendRow(['property_name', 'Nandhanam Elite Tourist Home']);
+    settSheet.appendRow(['total_rooms', '16']);
+    settSheet.appendRow(['ac_rooms', '8']);
+    settSheet.appendRow(['non_ac_rooms', '8']);
+    settSheet.appendRow(['advance_required', '₹500']);
+    settSheet.appendRow(['cancellation_policy', 'Free cancellation upto 48hrs before check-in']);
+    settSheet.appendRow(['housekeeping', 'Daily housekeeping / cleaning on req']);
+    settSheet.appendRow(['phone', '9447736460']);
+    settSheet.appendRow(['whatsapp', '9447736460']);
+    settSheet.appendRow(['email', 'nandhanamelite@gmail.com']);
+    settSheet.appendRow(['admin_notification_email', 'nandhanamelite@gmail.com']);
+    settSheet.appendRow(['callmebot_phone', '919447736460']);
+    settSheet.appendRow(['callmebot_apikey', '']);
+    settSheet.appendRow(['whatsapp_webhook_url', '']);
+    settSheet.appendRow(['instagram', 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==']);
+    settSheet.appendRow(['facebook', 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr']);
+    settSheet.appendRow(['address', 'Kaithakod Junction, Vengalloor – Mangattukavala Bypass Road, Thodupuzha East PO, Pin: 685585, Kerala, India']);
+    settSheet.appendRow(['check_in_time', 'Flexible (24-Hour Cycle)']);
+    settSheet.appendRow(['check_out_time', '24 Hours from Check-in']);
+    settSheet.appendRow(['timezone', TIMEZONE]);
+    settSheet.appendRow(['pending_expiry_minutes', PENDING_EXPIRY_MINUTES]);
+    settSheet.appendRow(['currency', '₹']);
 
-  // 4. Add Status Dropdown Data Validation to Bookings Sheet (Column 14 - Status)
-  var statusRange = bookSheet.getRange('N2:N1000');
-  var statusRule = SpreadsheetApp.newDataValidation()
-    .requireValueInList(['Pending', 'Confirmed', 'Done', 'Cancelled', 'Completed', 'Expired'], true)
-    .setAllowInvalid(true)
-    .build();
-  statusRange.setDataValidation(statusRule);
+    // 4. Add Status Dropdown Data Validation to Bookings Sheet (Column 14 - Status)
+    var statusRange = bookSheet.getRange('N2:N1000');
+    var statusRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['Pending', 'Confirmed', 'Done', 'Cancelled', 'Completed', 'Expired'], true)
+      .setAllowInvalid(true)
+      .build();
+    statusRange.setDataValidation(statusRule);
 
-  // 5. Add Smart Color-Coded Chip Formatting for Statuses
-  var rules = [];
-  rules.push(SpreadsheetApp.newConditionalFormatRule()
-    .whenTextEqualTo('Pending')
-    .setBackground('#FEF3C7').setFontColor('#92400E').setBold(true)
-    .setRanges([statusRange]).build());
+    // 5. Add Smart Color-Coded Chip Formatting for Statuses
+    var rules = [];
+    rules.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Pending')
+      .setBackground('#FEF3C7').setFontColor('#92400E').setBold(true)
+      .setRanges([statusRange]).build());
 
-  rules.push(SpreadsheetApp.newConditionalFormatRule()
-    .whenTextEqualTo('Confirmed')
-    .setBackground('#D1FAE5').setFontColor('#065F46').setBold(true)
-    .setRanges([statusRange]).build());
+    rules.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Confirmed')
+      .setBackground('#D1FAE5').setFontColor('#065F46').setBold(true)
+      .setRanges([statusRange]).build());
 
-  rules.push(SpreadsheetApp.newConditionalFormatRule()
-    .whenTextEqualTo('Done')
-    .setBackground('#A7F3D0').setFontColor('#047857').setBold(true)
-    .setRanges([statusRange]).build());
+    rules.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Done')
+      .setBackground('#A7F3D0').setFontColor('#047857').setBold(true)
+      .setRanges([statusRange]).build());
 
-  rules.push(SpreadsheetApp.newConditionalFormatRule()
-    .whenTextEqualTo('Cancelled')
-    .setBackground('#FEE2E2').setFontColor('#991B1B').setBold(true)
-    .setRanges([statusRange]).build());
+    rules.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Cancelled')
+      .setBackground('#FEE2E2').setFontColor('#991B1B').setBold(true)
+      .setRanges([statusRange]).build());
 
-  rules.push(SpreadsheetApp.newConditionalFormatRule()
-    .whenTextEqualTo('Completed')
-    .setBackground('#DBEAFE').setFontColor('#1E40AF').setBold(true)
-    .setRanges([statusRange]).build());
+    rules.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Completed')
+      .setBackground('#DBEAFE').setFontColor('#1E40AF').setBold(true)
+      .setRanges([statusRange]).build());
 
-  rules.push(SpreadsheetApp.newConditionalFormatRule()
-    .whenTextEqualTo('Expired')
-    .setBackground('#F3F4F6').setFontColor('#6B7280').setBold(true)
-    .setRanges([statusRange]).build());
+    rules.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('Expired')
+      .setBackground('#F3F4F6').setFontColor('#6B7280').setBold(true)
+      .setRanges([statusRange]).build());
 
-  bookSheet.setConditionalFormatRules(rules);
+    bookSheet.setConditionalFormatRules(rules);
 
-  // 6. Install Background 5-Minute Expiration Trigger & Spreadsheet onEdit Trigger
-  installAllTriggers();
+    // 6. Install Background 5-Minute Expiration Trigger & Spreadsheet onEdit Trigger
+    installAllTriggers();
 
-  Logger.log('Nandhanam Elite Google Sheet initial setup with Color-Coded Status Chips and automated triggers installed!');
+    Logger.log('✅ Nandhanam Elite Google Sheet initial setup with Color-Coded Status Chips and automated triggers installed successfully!');
+  } catch (err) {
+    Logger.log('❌ Error during initialSetup: ' + err.toString());
+    throw err;
+  }
 }
 
 /**
@@ -1443,7 +1501,11 @@ function sanitizeSheetCell(val) {
   var str = String(val).trim();
   if (str.length > 0) {
     var firstChar = str.charAt(0);
-    if (firstChar === '=' || firstChar === '+' || firstChar === '-' || firstChar === '@') {
+    // Strip leading + so phone numbers (+91...) don't trigger Google Sheets formula parse error (#ERROR!)
+    if (firstChar === '+') {
+      return str.replace(/^\+/, '').trim();
+    }
+    if (firstChar === '=' || firstChar === '-' || firstChar === '@') {
       return "'" + str;
     }
   }
