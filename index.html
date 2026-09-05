@@ -48,6 +48,10 @@
   <link rel="icon" type="image/png" href="assets/images/Logo.png">
   <link rel="apple-touch-icon" href="assets/images/Logo.png">
 
+  <!-- ================= IMAGE CDN PRECONNECT ================= -->
+  <link rel="preconnect" href="https://images.unsplash.com">
+  <link rel="dns-prefetch" href="https://images.unsplash.com">
+
   <!-- ================= GOOGLE FONTS ================= -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -219,7 +223,10 @@
   <header class="site-header" id="navbar">
     <div class="container header-container">
       <a href="#home" class="brand-logo" aria-label="Nandhanam Elite Home">
-        <img src="assets/images/navlogo.png" alt="Nandhanam Elite Crest" class="brand-logo-emblem">
+        <picture>
+          <source srcset="assets/images/navlogo.webp" type="image/webp">
+          <img src="assets/images/navlogo.png" alt="Nandhanam Elite Crest" class="brand-logo-emblem" width="48" height="48" decoding="async">
+        </picture>
         <div class="brand-logo-text">
           <span class="brand-title-nav">NANDHANAM ELITE</span>
           <span class="brand-sub-nav">TOURIST HOME</span>
@@ -407,8 +414,8 @@
 
       <div class="about-image-col">
         <div class="about-image-card">
-          <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
-            alt="Nandhanam Elite Building Exterior at Dusk" class="about-img" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=75"
+            alt="Nandhanam Elite Building Exterior at Dusk" class="about-img" loading="lazy" decoding="async">
           <div class="building-badge-overlay">
             <span class="badge-text">NANDHANAM ELITE</span>
           </div>
@@ -430,8 +437,8 @@
         <!-- Room 1: AC Room (R001) -->
         <div class="room-card" data-room-id="R001" data-capacity="2" data-price="1699">
           <div class="room-img-wrap">
-            <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80"
-              alt="AC Double Bedroom" class="room-img" loading="lazy">
+            <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=650&q=75"
+              alt="AC Double Bedroom" class="room-img" loading="lazy" decoding="async">
             <div class="room-tag">AIR CONDITIONED</div>
             <div class="room-status-badge available" id="badge-R001">Available</div>
           </div>
@@ -484,8 +491,8 @@
         <!-- Room 2: Non AC Comfort Room (R002) -->
         <div class="room-card" data-room-id="R002" data-capacity="2" data-price="1299">
           <div class="room-img-wrap">
-            <img src="https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=900&q=80"
-              alt="Non AC Comfortable Bedroom" class="room-img" loading="lazy">
+            <img src="https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=650&q=75"
+              alt="Non AC Comfortable Bedroom" class="room-img" loading="lazy" decoding="async">
             <div class="room-tag">NATURAL VENTILATION</div>
             <div class="room-status-badge available" id="badge-R002">Available</div>
           </div>
@@ -788,8 +795,8 @@
         <div class="gallery-item"
           data-img="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
           data-caption="Nandhanam Elite Exterior">
-          <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80"
-            alt="Nandhanam Elite Exterior" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=450&q=70"
+            alt="Nandhanam Elite Exterior" loading="lazy" decoding="async">
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -799,8 +806,8 @@
         <div class="gallery-item"
           data-img="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80"
           data-caption="AC Bedroom">
-          <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=600&q=80"
-            alt="AC Bedroom" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=450&q=70"
+            alt="AC Bedroom" loading="lazy" decoding="async">
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -810,8 +817,8 @@
         <div class="gallery-item"
           data-img="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80"
           data-caption="Dining & Lounge Area">
-          <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80"
-            alt="Dining & Lounge Area" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=450&q=70"
+            alt="Dining & Lounge Area" loading="lazy" decoding="async">
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -821,8 +828,8 @@
         <div class="gallery-item"
           data-img="https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80"
           data-caption="Comfortable Double Bedroom">
-          <img src="https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=600&q=80"
-            alt="Comfortable Double Bedroom" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=450&q=70"
+            alt="Comfortable Double Bedroom" loading="lazy" decoding="async">
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -832,8 +839,8 @@
         <div class="gallery-item"
           data-img="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=80"
           data-caption="Spotless Modern Bathroom">
-          <img src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80"
-            alt="Spotless Modern Bathroom" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=450&q=70"
+            alt="Spotless Modern Bathroom" loading="lazy" decoding="async">
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -843,8 +850,8 @@
         <div class="gallery-item"
           data-img="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80"
           data-caption="Lush Green Corridor">
-          <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=600&q=80"
-            alt="Lush Corridor" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=450&q=70"
+            alt="Lush Corridor" loading="lazy" decoding="async">
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -961,7 +968,10 @@
       <!-- Col 1: Brand & Bio -->
       <div class="footer-col brand-col">
         <div class="footer-brand-header">
-          <img src="assets/images/Logo.png" alt="Nandhanam Elite Crest" class="footer-emblem-img">
+          <picture>
+            <source srcset="assets/images/Logo.webp" type="image/webp">
+            <img src="assets/images/Logo.png" alt="Nandhanam Elite Crest" class="footer-emblem-img" width="180" height="103" loading="lazy" decoding="async">
+          </picture>
           <div class="footer-brand-text">
             <span class="footer-brand-title">NANDHANAM ELITE</span>
             <span class="footer-brand-sub">TOURIST HOME &bull; THODUPUZHA</span>
