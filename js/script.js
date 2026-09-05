@@ -13,21 +13,23 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxtySADegky1Ts7GSobKm_f0WJtG0Tx_O3NzgEQvk0DufowJM8Pc-wTJWYMZVAHz89Z/exec';
 
 // Property Contact details
-const PROPERTY_PHONE = '+919447000000';
-const PROPERTY_WA_NUMBER = '919447000000';
+const PROPERTY_PHONE = '+919447736460';
+const PROPERTY_WA_NUMBER = '919447736460';
 const PROPERTY_EMAIL = 'nandhanamelite@gmail.com';
+const PROPERTY_INSTAGRAM = 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==';
+const PROPERTY_FACEBOOK = 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr';
 
 // Room Catalogue Data
 const ROOMS_DATA = {
   'R001': {
     id: 'R001',
-    name: 'AC Luxury Room',
+    name: 'AC Room',
     tag: 'AIR CONDITIONED',
     price: 1699,
     capacity: 2,
     img: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80',
-    desc: 'Spacious climate-controlled room featuring plush queen bedding, modern attached bathroom with hot water, and quiet garden ambience. Ideal for couples, solo business executives, and small families.',
-    amenities: ['Air Conditioning', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water', 'High-Speed Wi-Fi', 'Daily housekeeping / cleaning on req']
+    desc: 'Spacious climate-controlled room featuring plush queen bedding, modern attached bathroom with 24/7 hot water, and quiet garden ambience. Ideal for couples, solo business executives, and small families.',
+    amenities: ['Air Conditioning', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
   },
   'R002': {
     id: 'R002',
@@ -37,7 +39,7 @@ const ROOMS_DATA = {
     capacity: 2,
     img: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80',
     desc: 'Well-ventilated, breezy double bedroom designed for budget-conscious travellers seeking clean, comfortable accommodation in central Thodupuzha.',
-    amenities: ['Natural Cross-Ventilation', 'TV in every room', 'Attached Bathroom', 'Hot Water on Demand', 'High-Speed Wi-Fi', 'Ceiling Fan', 'Daily housekeeping / cleaning on req']
+    amenities: ['Natural Ventilation', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
   }
 };
 
@@ -47,7 +49,7 @@ const LOCAL_BOOKINGS_STORE = [
   {
     booking_id: 'BK-20260820-0001',
     room_id: 'R001',
-    room_name: 'AC Luxury Room',
+    room_name: 'AC Room',
     guest_name: 'Rahul Sharma',
     phone: '+91 98765 43210',
     email: 'rahul@example.com',
@@ -139,7 +141,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Run initial availability calculation
   window.checkAvailabilityAction(false);
+
+  // Initialize automatic real-time background refresh
+  initAutoRefreshEngine();
 });
+
+/**
+ * Real-Time Auto-Refresh Engine
+ * - Polls Google Sheets every 30 seconds silently in the background
+ * - Automatically refreshes when the user returns to the tab or focuses the window
+ */
+function initAutoRefreshEngine() {
+  const AUTO_REFRESH_INTERVAL_MS = 30000; // 30 seconds
+
+  // 1. Silent Periodic Background Poller
+  setInterval(() => {
+    // Only poll when the tab is active to save resources & quota
+    if (!document.hidden) {
+      window.triggerAutoRefresh();
+    }
+  }, AUTO_REFRESH_INTERVAL_MS);
+
+  // 2. Instant Refresh on Tab Switch / Return to Page
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      window.triggerAutoRefresh();
+    }
+  });
+
+  // 3. Instant Refresh on Window Focus
+  window.addEventListener('focus', () => {
+    window.triggerAutoRefresh();
+  });
+}
+
+/**
+ * Global Silent Auto-Refresh Trigger
+ */
+window.triggerAutoRefresh = async function () {
+  try {
+    await fetchAndApplyRoomsAndSettings();
+    if (typeof window.checkAvailabilityAction === 'function') {
+      window.checkAvailabilityAction(false);
+    }
+  } catch (e) {
+    console.debug('[AutoRefresh Silent]', e);
+  }
+};
 
 /**
  * Dynamic Room & Settings Synchronizer (Google Sheets -> Website)
@@ -163,7 +211,7 @@ async function fetchAndApplyRoomsAndSettings() {
             capacity: Number(r.capacity) || 2,
             img: r.image_url || (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].img : 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80'),
             desc: r.description || (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].desc : ''),
-            amenities: (r.amenities && r.amenities.length > 0) ? r.amenities : (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].amenities : ['Wi-Fi', 'Attached Bathroom', 'Hot Water'])
+            amenities: (r.amenities && r.amenities.length > 0) ? r.amenities : (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].amenities : ['Wi-Fi', 'Attached Bathroom', '24/7 Hot Water'])
           };
         });
 
@@ -268,7 +316,7 @@ function applySettingsToDOM(settings) {
 
   const phone = settings.phone || settings.whatsapp;
   const whatsapp = settings.whatsapp || settings.phone;
-  const cleanWa = whatsapp ? String(whatsapp).replace(/[^0-9]/g, '') : '919447000000';
+  const cleanWa = whatsapp ? String(whatsapp).replace(/[^0-9]/g, '') : '919447736460';
 
   // Update WhatsApp links
   const waLinks = document.querySelectorAll('a[href*="wa.me"]');
@@ -276,20 +324,45 @@ function applySettingsToDOM(settings) {
     link.href = `https://wa.me/${cleanWa}?text=Hello%20Nandhanam%20Elite,%20I%20would%20like%20to%20enquire%20about%20room%20availability.`;
   });
 
+  // Update phone tel: links and text
+  if (phone) {
+    const cleanPhone = String(phone).replace(/[^\d+]/g, '');
+    const telLinks = document.querySelectorAll('a[href*="tel:"]');
+    telLinks.forEach(link => {
+      link.href = `tel:${cleanPhone}`;
+    });
+    const phoneValEls = document.querySelectorAll('.footer-info-val');
+    phoneValEls.forEach(el => el.textContent = phone);
+    const helplineCallEl = document.querySelector('.btn-helpline-call span');
+    if (helplineCallEl) helplineCallEl.textContent = `📞 Call ${phone}`;
+  }
+
   // Update check-in / check-out hints cleanly (preventing 1899 epoch strings)
-  const checkinTime = formatTimeClean(settings.check_in_time, '2:00 PM');
-  const checkoutTime = formatTimeClean(settings.check_out_time, '11:00 AM');
+  const checkinTime = formatTimeClean(settings.check_in_time, '24-Hour Flexible Check-in');
+  const checkoutTime = formatTimeClean(settings.check_out_time, '24 hrs from Check-in');
 
   const inHint = document.querySelector('label[for="checkinDate"] + .input-with-icon + .input-hint');
-  if (inHint) inHint.textContent = `From ${checkinTime}`;
+  if (inHint) inHint.textContent = checkinTime.includes('24') ? checkinTime : `From ${checkinTime}`;
   const outHint = document.querySelector('label[for="checkoutDate"] + .input-with-icon + .input-hint');
-  if (outHint) outHint.textContent = `Until ${checkoutTime}`;
+  if (outHint) outHint.textContent = checkoutTime.includes('24') ? checkoutTime : `Until ${checkoutTime}`;
 
   // Update property email
   const email = settings.email || PROPERTY_EMAIL;
   if (email) {
     const emailEls = document.querySelectorAll('.footer-info-list li:nth-child(2) span:last-child');
     emailEls.forEach(el => el.textContent = email);
+  }
+
+  // Update social links if configured
+  const instagram = settings.instagram || PROPERTY_INSTAGRAM;
+  if (instagram) {
+    const igLinks = document.querySelectorAll('a[aria-label="Instagram"]');
+    igLinks.forEach(el => el.href = instagram);
+  }
+  const facebook = settings.facebook || PROPERTY_FACEBOOK;
+  if (facebook) {
+    const fbLinks = document.querySelectorAll('a[aria-label="Facebook"]');
+    fbLinks.forEach(el => el.href = facebook);
   }
 }
 
@@ -390,7 +463,7 @@ function initDatePickers() {
     const updateDurationHint = () => {
       const nights = calculateNights(checkinInput.value, checkoutInput.value);
       if (stayDurationHint) {
-        stayDurationHint.textContent = `${nights} ${nights === 1 ? 'Night' : 'Nights'} selected`;
+        stayDurationHint.textContent = `${nights} ${nights === 1 ? 'Night' : 'Nights'} (24-Hour Stay)`;
       }
       // Update displayed price estimates on room cards
       updateRoomCardsPricing(nights);
@@ -607,12 +680,9 @@ window.checkAvailabilityAction = async function (shouldScroll = true) {
     return;
   }
 
-  // Show spinner on search button
-  if (checkBtn) {
-    const text = checkBtn.querySelector('.btn-text');
-    const spinner = checkBtn.querySelector('.btn-spinner');
-    if (text) text.style.display = 'none';
-    if (spinner) spinner.style.display = 'inline-block';
+  // Show spinner on search button ONLY on explicit user click (shouldScroll === true)
+  if (checkBtn && shouldScroll) {
+    checkBtn.classList.add('is-loading');
     checkBtn.disabled = true;
   }
 
@@ -653,7 +723,7 @@ window.checkAvailabilityAction = async function (shouldScroll = true) {
         if (res.is_available) {
           availableCount++;
           badge.className = 'room-status-badge available';
-          badge.textContent = 'Available';
+          badge.textContent = res.remaining_units && res.remaining_units < 8 ? `Available (${res.remaining_units} Left)` : 'Available';
           roomCard.classList.remove('is-booked');
           bookBtn.disabled = false;
           bookBtn.textContent = 'SELECT & BOOK';
@@ -683,19 +753,33 @@ window.checkAvailabilityAction = async function (shouldScroll = true) {
       }
     });
 
-    // Update Feedback Banner
-    if (banner) {
+    // Calculate total individual rooms available across all 16 units
+    let totalAvailableUnits = 0;
+    results.forEach(res => {
+      if (res.is_available) {
+        totalAvailableUnits += (typeof res.remaining_units === 'number' ? res.remaining_units : 8);
+      }
+    });
+
+    // Update Feedback Banner only when user explicitly searched
+    if (banner && shouldScroll) {
       banner.style.display = 'block';
       if (availableCount > 0) {
         banner.className = 'availability-status-banner';
         if (bannerIcon) bannerIcon.textContent = '✓';
-        if (bannerTitle) bannerTitle.textContent = `${availableCount} Room ${availableCount === 1 ? 'Option' : 'Options'} Available`;
+        if (bannerTitle) {
+          if (availableCount === results.length) {
+            bannerTitle.textContent = `Both AC & Non-AC Rooms Available (${totalAvailableUnits} of 16 Rooms Open)`;
+          } else {
+            bannerTitle.textContent = `${totalAvailableUnits} Rooms Available (${availableCount} Category Open)`;
+          }
+        }
         if (bannerDesc) bannerDesc.textContent = `Stay for ${nights} ${nights === 1 ? 'Night' : 'Nights'} (${formatDisplayDate(checkin)} to ${formatDisplayDate(checkout)}) for ${guests} ${guests === 1 ? 'Guest' : 'Guests'}.`;
       } else {
         banner.className = 'availability-status-banner error';
         if (bannerIcon) bannerIcon.textContent = '✕';
         if (bannerTitle) bannerTitle.textContent = 'No Rooms Available For Selected Dates';
-        if (bannerDesc) bannerDesc.textContent = 'All rooms are reserved for these dates or exceed guest capacity. Try selecting different dates or chat with our host directly.';
+        if (bannerDesc) bannerDesc.textContent = 'All 16 rooms are reserved for these dates or exceed guest capacity. Try selecting different dates or chat with our host directly.';
       }
     }
 
@@ -709,8 +793,8 @@ window.checkAvailabilityAction = async function (shouldScroll = true) {
   } catch (err) {
     console.warn('[Availability Check Notice]', err.message);
 
-    // Clear distinction: if API was configured but failed, show System Notice banner + local fallback
-    if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '') {
+    // If explicit user search failed, show notice
+    if (shouldScroll && APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '') {
       if (banner) {
         banner.style.display = 'block';
         banner.className = 'availability-status-banner error';
@@ -718,7 +802,6 @@ window.checkAvailabilityAction = async function (shouldScroll = true) {
         if (bannerTitle) bannerTitle.textContent = 'Live Sync Temporarily Offline';
         if (bannerDesc) bannerDesc.textContent = 'Unable to reach the live booking server. Showing cached property availability. Please contact us on WhatsApp for real-time confirmation.';
       }
-      showWarningMessage('Live booking server unavailable. Displaying local availability estimate.', 'Connection Notice');
     }
 
     // Apply local fallback
@@ -726,11 +809,8 @@ window.checkAvailabilityAction = async function (shouldScroll = true) {
     applyAvailabilityToDOM(fallbackResults, nights);
 
   } finally {
-    if (checkBtn) {
-      const text = checkBtn.querySelector('.btn-text');
-      const spinner = checkBtn.querySelector('.btn-spinner');
-      if (text) text.style.display = 'inline-block';
-      if (spinner) spinner.style.display = 'none';
+    if (checkBtn && shouldScroll) {
+      checkBtn.classList.remove('is-loading');
       checkBtn.disabled = false;
     }
   }
@@ -750,18 +830,19 @@ function formatShortDate(dateStr) {
 }
 
 /**
- * 3. Offline / Local In-Memory Availability Calculator
+ * 3. Offline / Local In-Memory Availability Calculator (Multi-room inventory: 8 AC & 8 Non-AC)
  */
 function calculateLocalAvailability(checkinStr, checkoutStr, guests) {
   const reqIn = parseDate(checkinStr);
   const reqOut = parseDate(checkoutStr);
   const nights = calculateNights(checkinStr, checkoutStr);
+  const maxInventory = 8; // 8 AC rooms and 8 Non-AC rooms
 
   return Object.values(ROOMS_DATA).map(room => {
     const fitsCapacity = guests ? room.capacity >= guests : true;
 
     // Check overlaps
-    let isOverlapping = false;
+    let overlappingCount = 0;
     const overlappingBookings = [];
     const nowTime = Date.now();
     const expiryLimitMs = 5 * 60 * 1000; // 5-minute temporary hold
@@ -783,7 +864,7 @@ function calculateLocalAvailability(checkinStr, checkoutStr, guests) {
           const bOut = parseDate(b.check_out);
           if (bIn && bOut) {
             if (reqIn < bOut && reqOut > bIn) {
-              isOverlapping = true;
+              overlappingCount++;
               overlappingBookings.push({
                 check_in: b.check_in,
                 check_out: b.check_out,
@@ -795,11 +876,13 @@ function calculateLocalAvailability(checkinStr, checkoutStr, guests) {
       }
     }
 
-    const isAvailable = !isOverlapping && fitsCapacity;
+    const isFullyBooked = overlappingCount >= maxInventory;
+    const isAvailable = !isFullyBooked && fitsCapacity;
+    const remainingUnits = Math.max(0, maxInventory - overlappingCount);
     let reason = '';
-    if (isOverlapping) {
+    if (isFullyBooked) {
       const dateSpans = overlappingBookings.map(ob => `${ob.check_in} to ${ob.check_out}`).join(', ');
-      reason = 'Booked for dates: ' + dateSpans;
+      reason = 'All ' + maxInventory + ' rooms booked for dates: ' + dateSpans;
     } else if (!fitsCapacity) {
       reason = `Exceeds capacity (${room.capacity} max)`;
     }
@@ -811,8 +894,10 @@ function calculateLocalAvailability(checkinStr, checkoutStr, guests) {
       total_nights: nights,
       total_estimated_price: room.price * nights,
       capacity: room.capacity,
+      total_inventory: maxInventory,
+      remaining_units: remainingUnits,
       is_available: isAvailable,
-      overlapping_dates: overlappingBookings,
+      overlapping_dates: isFullyBooked ? overlappingBookings : [],
       unavailability_reason: reason,
       amenities: room.amenities,
       image_url: room.img
@@ -829,7 +914,7 @@ function applyAvailabilityToDOM(results, nights) {
     if (badge && roomCard && bookBtn) {
       if (res.is_available) {
         badge.className = 'room-status-badge available';
-        badge.textContent = 'Available';
+        badge.textContent = res.remaining_units && res.remaining_units < 8 ? `Available (${res.remaining_units} Left)` : 'Available';
         roomCard.classList.remove('is-booked');
         bookBtn.disabled = false;
         bookBtn.textContent = 'SELECT & BOOK';
@@ -1059,7 +1144,7 @@ window.recalcModalStay = async function () {
   const totalPrice = room.price * nights;
 
   if (rateEl) rateEl.textContent = `₹${room.price.toLocaleString('en-IN')}`;
-  if (durationEl) durationEl.textContent = `${nights} ${nights === 1 ? 'Night' : 'Nights'}`;
+  if (durationEl) durationEl.textContent = `${nights} ${nights === 1 ? 'Night' : 'Nights'} (24h Stay)`;
   if (totalEl) totalEl.textContent = `₹${totalPrice.toLocaleString('en-IN')}`;
 
   // Check live availability for this room on these selected future dates
@@ -1104,7 +1189,7 @@ window.recalcModalStay = async function () {
       if (submitBtn) {
         submitBtn.disabled = false;
         const btnText = submitBtn.querySelector('.btn-text');
-        if (btnText) btnText.textContent = 'SUBMIT BOOKING REQUEST';
+        if (btnText) btnText.textContent = 'SEND TO ADMIN';
       }
     } else {
       availBadge.className = 'modal-avail-badge unavailable';
@@ -1286,7 +1371,7 @@ window.handleBookingSubmit = async function () {
     // Success: Close booking modal, show Confirmation Modal, and trigger toast
     closeAllModals();
     showConfirmationModal(bookingResult);
-    showSuccessMessage(`Booking request ${bookingResult.booking_id} placed successfully!`, 'Request Received');
+    showSuccessMessage(`Booking request ${bookingResult.booking_id} sent to admin successfully!`, 'Sent to Admin');
 
     // Refresh live availability in background
     window.checkAvailabilityAction(false);
@@ -1295,7 +1380,7 @@ window.handleBookingSubmit = async function () {
     console.error('[Booking Submission Error]', err);
 
     // Crucial: Form data is PRESERVED upon failure!
-    const userMessage = err.message || 'We could not submit your booking request right now. Please check your connection or contact us on WhatsApp.';
+    const userMessage = err.message || 'We could not submit your booking request right now. Please check your connection or contact us directly.';
     showErrorMessage(userMessage, err.code ? `Error (${err.code})` : 'Booking Request Error');
 
   } finally {
@@ -1303,7 +1388,10 @@ window.handleBookingSubmit = async function () {
     if (submitBtn) {
       const text = submitBtn.querySelector('.btn-text');
       const spinner = submitBtn.querySelector('.btn-spinner');
-      if (text) text.style.display = 'inline-block';
+      if (text) {
+        text.textContent = 'SEND TO ADMIN';
+        text.style.display = 'inline-block';
+      }
       if (spinner) spinner.style.display = 'none';
       submitBtn.disabled = false;
     }
@@ -1336,7 +1424,7 @@ function showConfirmationModal(details) {
   if (roomEl) roomEl.textContent = details.room_name || details.room_id;
   if (nameEl) nameEl.textContent = details.guest_name;
   if (phoneEl) phoneEl.textContent = details.phone || details.guest_phone;
-  if (datesEl) datesEl.textContent = `${formatDisplayDate(details.check_in)} to ${formatDisplayDate(details.check_out)} (${details.total_nights} ${details.total_nights === 1 ? 'Night' : 'Nights'})`;
+  if (datesEl) datesEl.textContent = `${formatDisplayDate(details.check_in)} to ${formatDisplayDate(details.check_out)} (${details.total_nights} ${details.total_nights === 1 ? 'Night' : 'Nights'} • 24-Hr Cycle)`;
   if (guestsEl) guestsEl.textContent = guestBreakdown;
   if (priceEl) priceEl.textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
 
@@ -1376,7 +1464,7 @@ function initModals() {
   const closeButtons = [
     'closeRoomDetailsModal', 'closeDetailBtn',
     'closeBookingModal', 'cancelBookingBtn',
-    'closeConfirmationModal'
+    'closeConfirmationModal', 'closeConfirmationBtn'
   ];
 
   closeButtons.forEach(id => {

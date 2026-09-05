@@ -257,21 +257,22 @@ function handleCheckAvailability(checkinStr, checkoutStr, guests, filterRoomId) 
     var bookingSheet = ss.getSheetByName(SHEET_BOOKINGS);
     var activeBookings = getActiveBookingsFromSheet(bookingSheet);
 
-    // Evaluate availability per room
+    // Evaluate availability per room based on total inventory (8 AC, 8 Non-AC)
+    var maxInventory = 8;
     var availability = allRooms.map(function (room) {
       if (filterRoomId && room.room_id !== filterRoomId) {
         return null;
       }
 
       var fitsCapacity = guests ? room.capacity >= guests : true;
-      var isOverlapping = false;
+      var overlappingCount = 0;
       var overlappingBookings = [];
 
       for (var j = 0; j < activeBookings.length; j++) {
         var b = activeBookings[j];
         if (b.room_id === room.room_id) {
           if (reqIn < b.check_out && reqOut > b.check_in) {
-            isOverlapping = true;
+            overlappingCount++;
             overlappingBookings.push({
               check_in: getFormattedDate(b.check_in),
               check_out: getFormattedDate(b.check_out),
@@ -281,13 +282,15 @@ function handleCheckAvailability(checkinStr, checkoutStr, guests, filterRoomId) 
         }
       }
 
-      var isAvailable = !isOverlapping && fitsCapacity;
+      var isFullyBooked = overlappingCount >= maxInventory;
+      var isAvailable = !isFullyBooked && fitsCapacity;
+      var remainingUnits = Math.max(0, maxInventory - overlappingCount);
       var reason = '';
-      if (isOverlapping) {
+      if (isFullyBooked) {
         var dateSpans = overlappingBookings.map(function (ob) {
           return ob.check_in + ' to ' + ob.check_out;
         }).join(', ');
-        reason = 'Booked for dates: ' + dateSpans;
+        reason = 'All ' + maxInventory + ' rooms occupied for dates: ' + dateSpans;
       } else if (!fitsCapacity) {
         reason = 'Exceeds maximum room capacity (' + room.capacity + ' guests max)';
       }
@@ -300,8 +303,10 @@ function handleCheckAvailability(checkinStr, checkoutStr, guests, filterRoomId) 
         total_nights: totalNights,
         total_estimated_price: room.price_per_night * totalNights,
         capacity: room.capacity,
+        total_inventory: maxInventory,
+        remaining_units: remainingUnits,
         is_available: isAvailable,
-        overlapping_dates: overlappingBookings,
+        overlapping_dates: isFullyBooked ? overlappingBookings : [],
         unavailability_reason: reason,
         amenities: room.amenities,
         image_url: room.image_url
@@ -423,16 +428,22 @@ function handleCreateBookingLocked(data) {
     var bRows = bookingSheet.getDataRange().getValues();
     var activeBookings = getActiveBookingsFromSheet(bookingSheet);
 
+    var maxInventory = 8;
+    var overlappingCount = 0;
     for (var k = 0; k < activeBookings.length; k++) {
       var ab = activeBookings[k];
       if (ab.room_id === roomId) {
         if (reqIn < ab.check_out && reqOut > ab.check_in) {
-          return createErrorResponse(
-            'BOOKING_CONFLICT',
-            'Sorry, ' + matchedRoom.room_name + ' was just booked for the selected dates. Please select different dates or another room.'
-          );
+          overlappingCount++;
         }
       }
+    }
+
+    if (overlappingCount >= maxInventory) {
+      return createErrorResponse(
+        'BOOKING_CONFLICT',
+        'Sorry, all ' + maxInventory + ' ' + matchedRoom.room_name + 's are fully occupied for the selected dates. Please select different dates or another room.'
+      );
     }
 
     // Collision-free unique ID generation check (Unpredictable 8-character alphanumeric token)
@@ -481,26 +492,36 @@ function handleCreateBookingLocked(data) {
       timestampStr
     ]);
 
+    var bookingData = {
+      booking_id: bookingId,
+      room_id: roomId,
+      room_name: matchedRoom.room_name,
+      guest_name: guestName,
+      phone: phone,
+      email: email,
+      check_in: getFormattedDate(reqIn),
+      check_out: getFormattedDate(reqOut),
+      adults: adults,
+      children: children,
+      total_guests: totalGuests,
+      total_nights: totalNights,
+      price_per_night: pricePerNightSnapshot,
+      total_amount: totalAmount,
+      notes: notes,
+      status: 'Pending',
+      created_at: timestampStr
+    };
+
+    // Automated Notifications Dispatch (Email & WhatsApp)
+    try {
+      dispatchBookingNotifications(bookingData, ss);
+    } catch (notifyErr) {
+      Logger.log('[NOTIFICATION_WARNING] Error dispatching alerts: ' + notifyErr.toString());
+    }
+
     return createSuccessResponse({
       booking_id: bookingId,
-      details: {
-        booking_id: bookingId,
-        room_id: roomId,
-        room_name: matchedRoom.room_name,
-        guest_name: guestName,
-        phone: phone,
-        email: email,
-        check_in: getFormattedDate(reqIn),
-        check_out: getFormattedDate(reqOut),
-        adults: adults,
-        children: children,
-        total_guests: totalGuests,
-        total_nights: totalNights,
-        price_per_night: pricePerNightSnapshot,
-        total_amount: totalAmount,
-        status: 'Pending',
-        created_at: timestampStr
-      }
+      details: bookingData
     }, 'Booking request successfully received! We will contact you on WhatsApp/Phone for confirmation.');
   } catch (err) {
     return createErrorResponse('INTERNAL_ERROR', 'Failed to create reservation.', err.toString());
@@ -571,10 +592,22 @@ function handleUpdateBookingLocked(data) {
         }
 
         if (data.new_status && statusIdx >= 0) {
-          var validStatuses = ['Pending', 'Confirmed', 'Cancelled', 'Completed', 'Expired'];
+          var validStatuses = ['Pending', 'Confirmed', 'Done', 'Cancelled', 'Completed', 'Expired'];
           var matchingStatus = validStatuses.find(function (s) { return s.toLowerCase() === String(data.new_status).toLowerCase(); });
           if (matchingStatus) {
             sheet.getRange(rowNum, statusIdx + 1).setValue(matchingStatus);
+
+            // If confirmed via API, notify customer
+            if (matchingStatus === 'Confirmed' || matchingStatus === 'Done') {
+              try {
+                var rowData = rows[i];
+                var bookingObj = extractBookingObjectFromRow(rowData, headers);
+                var notifSettings = getNotificationSettings(ss);
+                notifyCustomerBookingConfirmed(bookingObj, notifSettings);
+              } catch (confErr) {
+                Logger.log('[CONFIRM_NOTIFY_ERR] ' + confErr.toString());
+              }
+            }
           } else {
             return createErrorResponse('INVALID_STATUS', 'Invalid status provided: ' + data.new_status);
           }
@@ -643,22 +676,10 @@ function autoExpirePendingBookings() {
 }
 
 /**
- * Install Time-Driven Trigger for Auto-Expiration (Runs periodically)
+ * Install Time-Driven & Spreadsheet Triggers
  */
 function installTimeDrivenTriggers() {
-  var triggers = ScriptApp.getProjectTriggers();
-  for (var i = 0; i < triggers.length; i++) {
-    if (triggers[i].getHandlerFunction() === 'autoExpirePendingBookings') {
-      ScriptApp.deleteTrigger(triggers[i]);
-    }
-  }
-
-  ScriptApp.newTrigger('autoExpirePendingBookings')
-    .timeBased()
-    .everyMinutes(5)
-    .create();
-
-  Logger.log('5-minute time-driven trigger for autoExpirePendingBookings installed successfully.');
+  installAllTriggers();
 }
 
 /**
@@ -716,6 +737,502 @@ function getActiveBookingsFromSheet(sheet) {
 }
 
 /**
+ * ============================================================================
+ * AUTOMATED NOTIFICATIONS PIPELINE (EMAIL & WHATSAPP)
+ * ============================================================================
+ */
+
+/**
+ * Main Dispatcher for New Booking Notifications
+ */
+function dispatchBookingNotifications(details, ss) {
+  var settings = getNotificationSettings(ss);
+
+  // 1. Send Admin Email Alert
+  try {
+    sendAdminNotificationEmail(details, settings);
+  } catch (e) {
+    Logger.log('[EMAIL_ADMIN_ERR] ' + e.toString());
+  }
+
+  // 2. Send Guest Confirmation Email (if guest provided email)
+  try {
+    if (details.email && String(details.email).indexOf('@') > 0) {
+      sendGuestReceiptEmail(details, settings);
+    }
+  } catch (e) {
+    Logger.log('[EMAIL_GUEST_ERR] ' + e.toString());
+  }
+
+  // 3. Send Automated WhatsApp to Admin
+  try {
+    sendAdminWhatsAppAlert(details, settings);
+  } catch (e) {
+    Logger.log('[WHATSAPP_ADMIN_ERR] ' + e.toString());
+  }
+}
+
+/**
+ * Load settings dictionary from Settings Sheet
+ */
+function getNotificationSettings(ss) {
+  var targetSS = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = targetSS.getSheetByName(SHEET_SETTINGS);
+  var config = {
+    property_name: 'Nandhanam Elite Tourist Home',
+    phone: '+91 94477 36460',
+    whatsapp: '+91 94477 36460',
+    email: 'nandhanamelite@gmail.com',
+    admin_notification_email: '', // Defaults to script user / settings email
+    callmebot_phone: '',          // Phone with country code (e.g., 919447736460)
+    callmebot_apikey: '',         // Free API key from CallMeBot
+    whatsapp_webhook_url: '',     // Optional custom WhatsApp/Telegram webhook
+    advance_required: '₹500'
+  };
+
+  if (sheet && sheet.getLastRow() > 1) {
+    var rows = sheet.getDataRange().getValues();
+    for (var i = 1; i < rows.length; i++) {
+      var k = String(rows[i][0]).trim().toLowerCase().replace(/[\s-]+/g, '_');
+      var v = rows[i][1];
+      if (k && v !== undefined && v !== null && String(v).trim() !== '') {
+        config[k] = String(v).trim();
+      }
+    }
+  }
+  return config;
+}
+
+/**
+ * Sends HTML Email Alert to Property Admin
+ */
+function sendAdminNotificationEmail(b, settings) {
+  var recipient = settings.admin_notification_email || settings.email || Session.getEffectiveUser().getEmail();
+  if (!recipient || recipient.indexOf('@') === -1) return;
+
+  var subject = '🔔 [NEW BOOKING] ' + b.booking_id + ' - ' + b.guest_name + ' (' + b.room_name + ')';
+  var advanceReq = settings.advance_required || '₹500';
+  var cleanPhone = String(b.phone || '').replace(/[^0-9+]/g, '');
+
+  var htmlBody =
+    '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; color: #1F2937;">' +
+      '<div style="background-color: #111827; padding: 24px; text-align: center; color: #F59E0B;">' +
+        '<h2 style="margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 1px;">NANDHANAM ELITE HOMESTAY</h2>' +
+        '<p style="margin: 6px 0 0; color: #9CA3AF; font-size: 13px;">New Reservation Request Received</p>' +
+      '</div>' +
+      '<div style="padding: 24px; background-color: #FFFFFF;">' +
+        '<div style="background-color: #FEF3C7; border-left: 4px solid #D97706; padding: 12px 16px; margin-bottom: 20px; border-radius: 4px;">' +
+          '<strong style="color: #92400E;">Status: PENDING ADVANCE VERIFICATION</strong><br>' +
+          '<span style="font-size: 13px; color: #78350F;">Please verify ₹500 advance payment before marking as Confirmed.</span>' +
+        '</div>' +
+        '<table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">' +
+          '<tr><td style="padding: 8px 0; color: #6B7280; width: 40%;">Booking ID:</td><td style="padding: 8px 0; font-weight: bold; color: #111827;">' + b.booking_id + '</td></tr>' +
+          '<tr><td style="padding: 8px 0; color: #6B7280;">Room:</td><td style="padding: 8px 0; font-weight: bold; color: #111827;">' + b.room_name + '</td></tr>' +
+          '<tr><td style="padding: 8px 0; color: #6B7280;">Guest Name:</td><td style="padding: 8px 0; font-weight: bold; color: #111827;">' + b.guest_name + '</td></tr>' +
+          '<tr><td style="padding: 8px 0; color: #6B7280;">Phone / WhatsApp:</td><td style="padding: 8px 0; font-weight: bold;"><a href="tel:' + cleanPhone + '" style="color: #2563EB;">' + b.phone + '</a> &nbsp;|&nbsp; <a href="https://wa.me/' + cleanPhone.replace(/\+/g, '') + '" style="color: #059669; font-weight: bold;">Chat on WhatsApp</a></td></tr>' +
+          '<tr><td style="padding: 8px 0; color: #6B7280;">Guest Email:</td><td style="padding: 8px 0;">' + (b.email || 'Not provided') + '</td></tr>' +
+          '<tr><td style="padding: 8px 0; color: #6B7280;">Check-in:</td><td style="padding: 8px 0; font-weight: bold; color: #047857;">' + b.check_in + '</td></tr>' +
+          '<tr><td style="padding: 8px 0; color: #6B7280;">Check-out:</td><td style="padding: 8px 0; font-weight: bold; color: #B91C1C;">' + b.check_out + ' (' + b.total_nights + ' Nights)</td></tr>' +
+          '<tr><td style="padding: 8px 0; color: #6B7280;">Guests:</td><td style="padding: 8px 0;">' + b.total_guests + ' (' + b.adults + ' Adults' + (b.children > 0 ? ', ' + b.children + ' Children' : '') + ')</td></tr>' +
+          '<tr><td style="padding: 8px 0; color: #6B7280;">Total Stay Amount:</td><td style="padding: 8px 0; font-weight: bold; font-size: 16px; color: #111827;">₹' + Number(b.total_amount).toLocaleString('en-IN') + '</td></tr>' +
+          '<tr><td style="padding: 8px 0; color: #6B7280;">Advance Required:</td><td style="padding: 8px 0; font-weight: bold; color: #D97706;">' + advanceReq + '</td></tr>' +
+          (b.notes ? '<tr><td style="padding: 8px 0; color: #6B7280;">Special Requests:</td><td style="padding: 8px 0; font-style: italic;">' + b.notes + '</td></tr>' : '') +
+        '</table>' +
+        '<div style="text-align: center; margin-top: 24px;">' +
+          '<a href="https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '" style="background-color: #059669; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Open Google Sheet to Manage Booking</a>' +
+        '</div>' +
+      '</div>' +
+      '<div style="background-color: #F9FAFB; padding: 16px; text-align: center; font-size: 12px; color: #9CA3AF; border-top: 1px solid #E5E7EB;">' +
+        'Nandhanam Elite Automated Booking System &bull; ' + b.created_at +
+      '</div>' +
+    '</div>';
+
+  MailApp.sendEmail({
+    to: recipient,
+    subject: subject,
+    htmlBody: htmlBody
+  });
+}
+
+/**
+ * Sends HTML Reservation Receipt Email to Guest
+ */
+function sendGuestReceiptEmail(b, settings) {
+  var subject = 'Reservation Request Received (' + b.booking_id + ') - ' + settings.property_name;
+  var waClean = String(settings.whatsapp || settings.phone || '').replace(/[^0-9]/g, '');
+
+  var htmlBody =
+    '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; color: #1F2937;">' +
+      '<div style="background-color: #111827; padding: 24px; text-align: center; color: #F59E0B;">' +
+        '<h2 style="margin: 0; font-size: 20px; font-weight: bold;">' + settings.property_name + '</h2>' +
+        '<p style="margin: 6px 0 0; color: #9CA3AF; font-size: 13px;">Booking Request Acknowledgment</p>' +
+      '</div>' +
+      '<div style="padding: 24px; background-color: #FFFFFF;">' +
+        '<p>Dear <strong>' + b.guest_name + '</strong>,</p>' +
+        '<p>Thank you for choosing Nandhanam Elite! We have received your booking request. Here are your reservation details:</p>' +
+        '<div style="background-color: #F3F4F6; padding: 16px; border-radius: 8px; margin: 20px 0;">' +
+          '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">' +
+            '<tr><td style="padding: 6px 0; color: #6B7280;">Booking ID:</td><td style="padding: 6px 0; font-weight: bold;">' + b.booking_id + '</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #6B7280;">Room:</td><td style="padding: 6px 0; font-weight: bold;">' + b.room_name + '</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #6B7280;">Check-in:</td><td style="padding: 6px 0; font-weight: bold;">' + b.check_in + ' (Flexible 24-Hr Cycle)</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #6B7280;">Check-out:</td><td style="padding: 6px 0; font-weight: bold;">' + b.check_out + ' (24 hrs from Check-in)</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #6B7280;">Total Nights:</td><td style="padding: 6px 0;">' + b.total_nights + '</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #6B7280;">Total Amount:</td><td style="padding: 6px 0; font-weight: bold; font-size: 15px; color: #111827;">₹' + Number(b.total_amount).toLocaleString('en-IN') + '</td></tr>' +
+          '</table>' +
+        '</div>' +
+        '<h4 style="color: #111827; margin-bottom: 8px;">Next Step to Confirm Your Stay:</h4>' +
+        '<p style="font-size: 14px; color: #4B5563; line-height: 1.5;">' +
+          'Our property manager will connect with you on WhatsApp/Phone with payment details for the <strong>₹500 advance deposit</strong>. Once the advance is verified, your booking will be officially confirmed.' +
+        '</p>' +
+        '<div style="text-align: center; margin: 24px 0;">' +
+          '<a href="https://wa.me/' + waClean + '?text=Hi%2C%20I%20have%20submitted%20booking%20' + encodeURIComponent(b.booking_id) + '%20for%20' + encodeURIComponent(b.room_name) + '." style="background-color: #25D366; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Chat with Host on WhatsApp</a>' +
+        '</div>' +
+        '<p style="font-size: 13px; color: #6B7280;">Address: ' + (settings.address || 'Kaithakod Junction, Thodupuzha East PO, Kerala') + '<br>Contact: ' + (settings.phone || '') + '</p>' +
+      '</div>' +
+      '<div style="background-color: #F9FAFB; padding: 16px; text-align: center; font-size: 12px; color: #9CA3AF; border-top: 1px solid #E5E7EB;">' +
+        'Thank you for staying with us &bull; Nandhanam Elite Homestay' +
+      '</div>' +
+    '</div>';
+
+  MailApp.sendEmail({
+    to: b.email,
+    subject: subject,
+    htmlBody: htmlBody
+  });
+}
+
+/**
+ * Sends Automated WhatsApp Alert to Admin via CallMeBot / Webhook
+ */
+function sendAdminWhatsAppAlert(b, settings) {
+  var waText =
+    '🚨 *NEW BOOKING REQUEST - NANDHANAM ELITE*\n' +
+    '----------------------------------------\n' +
+    '• *ID:* ' + b.booking_id + '\n' +
+    '• *Room:* ' + b.room_name + '\n' +
+    '• *Guest:* ' + b.guest_name + '\n' +
+    '• *Phone:* ' + b.phone + '\n' +
+    '• *Check-in:* ' + b.check_in + '\n' +
+    '• *Check-out:* ' + b.check_out + ' (' + b.total_nights + 'N)\n' +
+    '• *Guests:* ' + b.total_guests + '\n' +
+    '• *Total:* ₹' + Number(b.total_amount).toLocaleString('en-IN') + '\n' +
+    '• *Advance Due:* ' + (settings.advance_required || '₹500') + '\n' +
+    '----------------------------------------\n' +
+    '👉 Status: PENDING. Please contact guest for advance payment.';
+
+  // 1. CallMeBot Automated WhatsApp Integration (Free API)
+  var cmbPhone = settings.callmebot_phone || settings.whatsapp || settings.phone;
+  var cmbKey = settings.callmebot_apikey;
+  if (cmbPhone && cmbKey) {
+    var cleanPhone = String(cmbPhone).replace(/[^0-9]/g, '');
+    var url = 'https://api.callmebot.com/whatsapp.php?phone=' + cleanPhone +
+              '&text=' + encodeURIComponent(waText) +
+              '&apikey=' + encodeURIComponent(cmbKey);
+    try {
+      UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+      Logger.log('[WHATSAPP_DISPATCH] Sent via CallMeBot to ' + cleanPhone);
+    } catch (e) {
+      Logger.log('[CALLMEBOT_ERROR] ' + e.toString());
+    }
+  }
+
+  // 2. Custom Webhook (UltraMsg / Twilio / WATI / Telegram)
+  if (settings.whatsapp_webhook_url && settings.whatsapp_webhook_url.indexOf('http') === 0) {
+    try {
+      UrlFetchApp.fetch(settings.whatsapp_webhook_url, {
+        method: 'post',
+        contentType: 'application/json',
+        payload: JSON.stringify({
+          event: 'new_booking',
+          booking: b,
+          formatted_message: waText
+        }),
+        muteHttpExceptions: true
+      });
+      Logger.log('[WEBHOOK_DISPATCH] Dispatched to ' + settings.whatsapp_webhook_url);
+    } catch (e) {
+      Logger.log('[WEBHOOK_ERROR] ' + e.toString());
+    }
+  }
+}
+
+/**
+ * ============================================================================
+ * CUSTOMER CONFIRMATION NOTIFICATIONS (WHEN STATUS BECOMES 'CONFIRMED' / 'DONE')
+ * ============================================================================
+ */
+
+/**
+ * Notify customer that their booking has been confirmed by the host
+ */
+function notifyCustomerBookingConfirmed(b, settings) {
+  if (!b || !b.booking_id) return;
+
+  // 1. Send Official Confirmation Email Voucher
+  if (b.email && String(b.email).indexOf('@') > 0) {
+    try {
+      sendCustomerBookingConfirmedEmail(b, settings);
+    } catch (e) {
+      Logger.log('[CUSTOMER_CONFIRM_EMAIL_ERR] ' + e.toString());
+    }
+  }
+
+  // 2. Send Automated WhatsApp if customer gateway is configured
+  try {
+    sendCustomerWhatsAppConfirmation(b, settings);
+  } catch (e) {
+    Logger.log('[CUSTOMER_CONFIRM_WA_ERR] ' + e.toString());
+  }
+}
+
+/**
+ * Sends Official Booking Confirmed Voucher Email to Guest
+ */
+function sendCustomerBookingConfirmedEmail(b, settings) {
+  var subject = '🎉 BOOKING CONFIRMED: ' + b.room_name + ' (' + b.booking_id + ') - ' + settings.property_name;
+  var waClean = String(settings.whatsapp || settings.phone || '').replace(/[^0-9]/g, '');
+  var totalFormatted = Number(b.total_amount || 0).toLocaleString('en-IN');
+  var advanceNum = Number(b.advance_paid || 500);
+  var advanceFormatted = advanceNum.toLocaleString('en-IN');
+  var balanceNum = Math.max(0, Number(b.total_amount || 0) - advanceNum);
+  var balanceFormatted = balanceNum.toLocaleString('en-IN');
+  var isFullyPaid = balanceNum === 0;
+
+  var htmlBody =
+    '<div style="font-family: Arial, sans-serif; max-width: 620px; margin: auto; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; color: #1F2937; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">' +
+      '<div style="background: linear-gradient(135deg, #065F46, #047857); padding: 28px 24px; text-align: center; color: #FFFFFF;">' +
+        '<div style="background-color: #10B981; color: #FFFFFF; display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px;">CONFIRMED RESERVATION</div>' +
+        '<h2 style="margin: 4px 0 0; font-size: 22px; font-weight: bold; color: #FFFFFF;">' + settings.property_name + '</h2>' +
+        '<p style="margin: 4px 0 0; color: #D1FAE5; font-size: 13px;">Your stay is locked in. We look forward to hosting you!</p>' +
+      '</div>' +
+      '<div style="padding: 24px; background-color: #FFFFFF;">' +
+        '<p style="font-size: 15px; margin-top: 0;">Dear <strong>' + b.guest_name + '</strong>,</p>' +
+        '<p style="font-size: 14px; color: #4B5563; line-height: 1.5;">' +
+          'Great news! Your payment has been verified and your booking has been <strong>OFFICIALLY CONFIRMED</strong>.' +
+        '</p>' +
+        '<div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 18px; margin: 20px 0;">' +
+          '<h3 style="margin: 0 0 12px; font-size: 15px; color: #0F172A; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">Reservation Summary</h3>' +
+          '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">' +
+            '<tr><td style="padding: 6px 0; color: #64748B; width: 45%;">Booking Reference ID:</td><td style="padding: 6px 0; font-weight: bold; color: #0F172A;">' + b.booking_id + '</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #64748B;">Room Category:</td><td style="padding: 6px 0; font-weight: bold; color: #0F172A;">' + b.room_name + '</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #64748B;">Check-in Date:</td><td style="padding: 6px 0; font-weight: bold; color: #047857;">' + b.check_in + ' (from ' + (settings.check_in_time || '2:00 PM') + ')</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #64748B;">Check-out Date:</td><td style="padding: 6px 0; font-weight: bold; color: #B91C1C;">' + b.check_out + ' (until ' + (settings.check_out_time || '11:00 AM') + ')</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #64748B;">Duration & Guests:</td><td style="padding: 6px 0; color: #0F172A;">' + b.total_nights + ' Nights &bull; ' + b.total_guests + ' Guests</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #64748B;">Total Stay Cost:</td><td style="padding: 6px 0; font-weight: bold; color: #0F172A;">₹' + totalFormatted + '</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #64748B;">Advance Paid:</td><td style="padding: 6px 0; font-weight: bold; color: #047857;">₹' + advanceFormatted + (isFullyPaid ? ' (Full Payment Received)' : ' (Verified)') + '</td></tr>' +
+            '<tr><td style="padding: 6px 0; color: #64748B;">Balance Due at Check-in:</td><td style="padding: 6px 0; font-weight: bold; color: ' + (isFullyPaid ? '#047857' : '#0F172A') + ';">' + (isFullyPaid ? '₹0 (Fully Paid ✅)' : '₹' + balanceFormatted) + '</td></tr>' +
+          '</table>' +
+        '</div>' +
+        '<div style="background-color: #ECFDF5; border-left: 4px solid #10B981; padding: 12px 16px; margin-bottom: 20px; border-radius: 4px;">' +
+          '<strong style="color: #065F46; font-size: 13px;">📍 Property Address & Directions</strong><br>' +
+          '<span style="font-size: 13px; color: #047857;">' + (settings.address || 'Kaithakod Junction, Vengalloor Bypass, Thodupuzha East PO, Pin: 685585, Kerala') + '</span>' +
+        '</div>' +
+        '<div style="text-align: center; margin: 24px 0;">' +
+          '<a href="https://wa.me/' + waClean + '?text=Hi%2C%20regarding%20my%20confirmed%20booking%20' + encodeURIComponent(b.booking_id) + '" style="background-color: #25D366; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Message Host on WhatsApp</a>' +
+        '</div>' +
+        '<p style="font-size: 13px; color: #64748B; text-align: center;">Need to update your dates or have questions? Contact Helpline: <strong>' + (settings.phone || settings.whatsapp || '') + '</strong></p>' +
+      '</div>' +
+      '<div style="background-color: #F8FAFC; padding: 16px; text-align: center; font-size: 12px; color: #94A3B8; border-top: 1px solid #E2E8F0;">' +
+        'Nandhanam Elite Tourist Home &bull; Official Confirmation Voucher &bull; ' + getFormattedTimestamp() +
+      '</div>' +
+    '</div>';
+
+  MailApp.sendEmail({
+    to: b.email,
+    subject: subject,
+    htmlBody: htmlBody
+  });
+  Logger.log('[CUSTOMER_CONFIRMED_EMAIL] Sent to ' + b.email + ' for ' + b.booking_id);
+}
+
+/**
+ * Sends Automated WhatsApp Confirmation to Customer via Webhook
+ */
+function sendCustomerWhatsAppConfirmation(b, settings) {
+  var waClean = String(settings.whatsapp || settings.phone || '').replace(/[^0-9]/g, '');
+  var advanceNum = Number(b.advance_paid || 500);
+  var balanceNum = Math.max(0, Number(b.total_amount || 0) - advanceNum);
+  var isFullyPaid = balanceNum === 0;
+
+  var text =
+    '🎉 *BOOKING CONFIRMED - NANDHANAM ELITE*\n' +
+    '----------------------------------------\n' +
+    'Dear ' + b.guest_name + ',\n' +
+    'Your payment is received and your room is *CONFIRMED*!\n\n' +
+    '• *Booking ID:* ' + b.booking_id + '\n' +
+    '• *Room:* ' + b.room_name + '\n' +
+    '• *Check-in:* ' + b.check_in + ' (from ' + (settings.check_in_time || '2:00 PM') + ')\n' +
+    '• *Check-out:* ' + b.check_out + ' (until ' + (settings.check_out_time || '11:00 AM') + ')\n' +
+    '• *Nights:* ' + b.total_nights + ' Nights (' + b.total_guests + ' Guests)\n' +
+    '• *Total Cost:* ₹' + Number(b.total_amount || 0).toLocaleString('en-IN') + '\n' +
+    '• *Amount Paid:* ₹' + advanceNum.toLocaleString('en-IN') + (isFullyPaid ? ' (Full Payment ✅)' : '') + '\n' +
+    '• *Balance at Check-in:* ' + (isFullyPaid ? '₹0 (Paid in Full)' : '₹' + balanceNum.toLocaleString('en-IN')) + '\n\n' +
+    '📍 *Address:* ' + (settings.address || 'Kaithakod Junction, Thodupuzha East PO, Kerala') + '\n' +
+    '📞 *Helpline:* ' + (settings.phone || settings.whatsapp || '') + '\n' +
+    '----------------------------------------\n' +
+    'We look forward to hosting you at Nandhanam Elite!';
+
+  // Dispatch to custom webhook if configured (UltraMsg / Twilio / WATI)
+  if (settings.whatsapp_webhook_url && settings.whatsapp_webhook_url.indexOf('http') === 0) {
+    UrlFetchApp.fetch(settings.whatsapp_webhook_url, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({
+        event: 'booking_confirmed',
+        recipient_phone: String(b.phone || '').replace(/[^0-9]/g, ''),
+        booking: b,
+        formatted_message: text
+      }),
+      muteHttpExceptions: true
+    });
+    Logger.log('[WEBHOOK_CUSTOMER_CONFIRMED] Dispatched for ' + b.booking_id);
+  }
+}
+
+/**
+ * Extract Booking Object from a Row
+ */
+function extractBookingObjectFromRow(row, headers) {
+  var getVal = function(key) {
+    var idx = headers.indexOf(key.toLowerCase());
+    return idx >= 0 && row[idx] !== undefined ? row[idx] : '';
+  };
+
+  var inVal = getVal('check_in');
+  var outVal = getVal('check_out');
+  var inDate = inVal instanceof Date ? getFormattedDate(inVal) : String(inVal);
+  var outDate = outVal instanceof Date ? getFormattedDate(outVal) : String(outVal);
+
+  var totalNights = 1;
+  var dIn = parseDateString(inDate);
+  var dOut = parseDateString(outDate);
+  if (dIn && dOut) {
+    totalNights = Math.max(1, Math.ceil(Math.abs(dOut - dIn) / (1000 * 60 * 60 * 24)));
+  }
+
+  var totalAmt = getVal('total_amount') || 0;
+  var advVal = getVal('advance_paid');
+  var advNum = (advVal !== '' && !isNaN(Number(advVal))) ? Number(advVal) : 500;
+
+  return {
+    booking_id: String(getVal('booking_id')).trim(),
+    room_id: String(getVal('room_id')).trim(),
+    room_name: String(getVal('room_name')).trim(),
+    guest_name: String(getVal('guest_name')).trim(),
+    phone: String(getVal('phone')).trim(),
+    email: String(getVal('email')).trim(),
+    check_in: inDate,
+    check_out: outDate,
+    adults: getVal('adults') || 1,
+    children: getVal('children') || 0,
+    total_guests: getVal('total_guests') || 1,
+    total_nights: totalNights,
+    price_per_night: getVal('price_per_night') || 0,
+    total_amount: totalAmt,
+    advance_paid: advNum,
+    balance_due: Math.max(0, Number(totalAmt) - advNum),
+    status: String(getVal('status')).trim(),
+    notes: String(getVal('notes')).trim(),
+    created_at: getVal('created_at'),
+    updated_at: getVal('updated_at')
+  };
+}
+
+/**
+ * ============================================================================
+ * SPREADSHEET EDIT EVENT HANDLER (Triggered when Admin edits Google Sheet)
+ * ============================================================================
+ */
+
+/**
+ * Simple onEdit trigger (gives immediate visual feedback / runs inside sheet)
+ */
+function onEdit(e) {
+  handleSpreadsheetEdit(e);
+}
+
+/**
+ * Installable onEdit trigger (guaranteed full MailApp & UrlFetch permissions)
+ */
+function handleSpreadsheetEdit(e) {
+  try {
+    if (!e || !e.range) return;
+
+    var sheet = e.range.getSheet();
+    if (sheet.getName() !== SHEET_BOOKINGS) return;
+
+    var row = e.range.getRow();
+    var col = e.range.getColumn();
+
+    // Row 1 is header
+    if (row <= 1) return;
+
+    // Determine status column index
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function (h) {
+      return String(h).trim().toLowerCase();
+    });
+    var statusIdx = headers.indexOf('status');
+    var updatedIdx = headers.indexOf('updated_at');
+
+    // Check if the edited column is the Status column
+    if (col === (statusIdx + 1)) {
+      var newStatus = String(e.value || sheet.getRange(row, col).getValue()).trim();
+      var oldStatus = String(e.oldValue || '').trim();
+
+      // Timestamp the update
+      if (updatedIdx >= 0) {
+        sheet.getRange(row, updatedIdx + 1).setValue(getFormattedTimestamp());
+      }
+
+      // If status changed to Confirmed or Done, notify customer
+      if (newStatus.toLowerCase() === 'confirmed' || newStatus.toLowerCase() === 'done') {
+        var rowValues = sheet.getRange(row, 1, 1, headers.length).getValues()[0];
+        var bookingObj = extractBookingObjectFromRow(rowValues, headers);
+        var ss = sheet.getParent();
+        var notifSettings = getNotificationSettings(ss);
+
+        notifyCustomerBookingConfirmed(bookingObj, notifSettings);
+
+        if (ss && ss.toast) {
+          ss.toast('✅ Confirmation email sent to ' + bookingObj.guest_name + ' (' + bookingObj.booking_id + ')', 'Booking Confirmed', 5);
+        }
+      }
+    }
+  } catch (err) {
+    Logger.log('[ON_EDIT_ERR] ' + err.toString());
+  }
+}
+
+/**
+ * Install All Background & Sheet Triggers in 1-Click
+ */
+function installAllTriggers() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var triggers = ScriptApp.getProjectTriggers();
+
+  for (var i = 0; i < triggers.length; i++) {
+    var func = triggers[i].getHandlerFunction();
+    if (func === 'autoExpirePendingBookings' || func === 'handleSpreadsheetEdit') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+
+  // 1. Install 5-min Auto Expiry Trigger
+  ScriptApp.newTrigger('autoExpirePendingBookings')
+    .timeBased()
+    .everyMinutes(5)
+    .create();
+
+  // 2. Install Spreadsheet onEdit Trigger (for guaranteed email permissions on status changes)
+  ScriptApp.newTrigger('handleSpreadsheetEdit')
+    .forSpreadsheet(ss)
+    .onEdit()
+    .create();
+
+  Logger.log('✅ All triggers (5-minute auto-expiry and onEdit status handler) installed successfully!');
+}
+
+/**
  * 7. Get Homestay Settings
  */
 function handleGetSettings() {
@@ -724,12 +1241,18 @@ function handleGetSettings() {
     var sheet = ss.getSheetByName(SHEET_SETTINGS);
     var settings = {
       property_name: 'Nandhanam Elite Tourist Home',
-      phone: '+91 94470 00000',
-      whatsapp: '+91 94470 00000',
+      phone: '+91 94477 36460',
+      whatsapp: '+91 94477 36460',
       email: 'nandhanamelite@gmail.com',
+      admin_notification_email: 'nandhanamelite@gmail.com',
+      callmebot_phone: '',
+      callmebot_apikey: '',
+      whatsapp_webhook_url: '',
+      instagram: 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==',
+      facebook: 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr',
       address: 'Kaithakod Junction, Vengalloor – Mangattukavala Bypass Road, Thodupuzha East PO, Pin: 685585, Kerala, India',
-      check_in_time: '2:00 PM',
-      check_out_time: '11:00 AM',
+      check_in_time: 'Flexible (24-Hour Cycle)',
+      check_out_time: '24 Hours from Check-in',
       timezone: TIMEZONE,
       pending_expiry_minutes: PENDING_EXPIRY_MINUTES,
       currency: '₹'
@@ -758,6 +1281,42 @@ function handleGetSettings() {
 }
 
 /**
+ * 1-Click Sync to populate & fix all settings in the Settings Sheet
+ */
+function syncSettingsSheet() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var settSheet = ss.getSheetByName(SHEET_SETTINGS) || ss.insertSheet(SHEET_SETTINGS);
+  settSheet.clear();
+  settSheet.getRange('A1:B50').setNumberFormat('@'); // Plain text to avoid formula errors
+  settSheet.getRange(1, 1, 1, 2).setValues([['Setting', 'Value']])
+    .setFontWeight('bold').setBackground('#C5A880');
+  settSheet.appendRow(['property_name', 'Nandhanam Elite Tourist Home']);
+  settSheet.appendRow(['total_rooms', '16']);
+  settSheet.appendRow(['ac_rooms', '8']);
+  settSheet.appendRow(['non_ac_rooms', '8']);
+  settSheet.appendRow(['advance_required', '₹500']);
+  settSheet.appendRow(['cancellation_policy', 'Free cancellation upto 48hrs before check-in']);
+  settSheet.appendRow(['housekeeping', 'Daily housekeeping / cleaning on req']);
+  settSheet.appendRow(['phone', '+91 94477 36460']);
+  settSheet.appendRow(['whatsapp', '+91 94477 36460']);
+  settSheet.appendRow(['email', 'nandhanamelite@gmail.com']);
+  settSheet.appendRow(['admin_notification_email', 'nandhanamelite@gmail.com']);
+  settSheet.appendRow(['callmebot_phone', '919447736460']);
+  settSheet.appendRow(['callmebot_apikey', '']);
+  settSheet.appendRow(['whatsapp_webhook_url', '']);
+  settSheet.appendRow(['instagram', 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==']);
+  settSheet.appendRow(['facebook', 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr']);
+  settSheet.appendRow(['address', 'Kaithakod Junction, Vengalloor – Mangattukavala Bypass Road, Thodupuzha East PO, Pin: 685585, Kerala, India']);
+  settSheet.appendRow(['check_in_time', 'Flexible (24-Hour Cycle)']);
+  settSheet.appendRow(['check_out_time', '24 Hours from Check-in']);
+  settSheet.appendRow(['timezone', TIMEZONE]);
+  settSheet.appendRow(['pending_expiry_minutes', PENDING_EXPIRY_MINUTES]);
+  settSheet.appendRow(['currency', '₹']);
+
+  Logger.log('✅ Settings sheet successfully refreshed and fixed with +91 94477 36460!');
+}
+
+/**
  * One-Click Initial Setup Function
  */
 function initialSetup() {
@@ -774,7 +1333,7 @@ function initialSetup() {
 
   var nowStr = getFormattedTimestamp();
   roomSheet.appendRow([
-    'R001', 'AC Luxury Room',
+    'R001', 'AC Room',
     'Spacious air-conditioned room (8 rooms in property) with plush bedding, private modern attached bathroom, TV in every room, and scenic view.',
     1699, 2, 'Air Conditioning, TV in every room, Attached Bathroom, 24/7 Hot Water, High-Speed Wi-Fi, Daily housekeeping / cleaning on req',
     'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
@@ -783,7 +1342,7 @@ function initialSetup() {
   roomSheet.appendRow([
     'R002', 'Non AC Comfort Room',
     'Well-ventilated comfortable double bedroom (8 rooms in property) with attached bathroom, TV in every room, and work desk.',
-    1299, 2, 'Natural Ventilation, TV in every room, Attached Bathroom, Hot Water, Wi-Fi, Daily housekeeping / cleaning on req',
+    1299, 2, 'Natural Ventilation, TV in every room, Attached Bathroom, 24/7 Hot Water, Wi-Fi, Daily housekeeping / cleaning on req',
     'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=900&q=80',
     'Active', nowStr, nowStr
   ]);
@@ -802,6 +1361,7 @@ function initialSetup() {
   // 3. Settings Sheet
   var settSheet = ss.getSheetByName(SHEET_SETTINGS) || ss.insertSheet(SHEET_SETTINGS);
   settSheet.clear();
+  settSheet.getRange('A1:B50').setNumberFormat('@'); // Enforce Plain Text to prevent formula parse errors
   settSheet.getRange(1, 1, 1, 2).setValues([['Setting', 'Value']])
     .setFontWeight('bold').setBackground('#C5A880');
   settSheet.appendRow(['property_name', 'Nandhanam Elite Tourist Home']);
@@ -811,12 +1371,18 @@ function initialSetup() {
   settSheet.appendRow(['advance_required', '₹500']);
   settSheet.appendRow(['cancellation_policy', 'Free cancellation upto 48hrs before check-in']);
   settSheet.appendRow(['housekeeping', 'Daily housekeeping / cleaning on req']);
-  settSheet.appendRow(['phone', "'+91 94470 00000"]);
-  settSheet.appendRow(['whatsapp', "'+91 94470 00000"]);
+  settSheet.appendRow(['phone', '+91 94477 36460']);
+  settSheet.appendRow(['whatsapp', '+91 94477 36460']);
   settSheet.appendRow(['email', 'nandhanamelite@gmail.com']);
+  settSheet.appendRow(['admin_notification_email', 'nandhanamelite@gmail.com']);
+  settSheet.appendRow(['callmebot_phone', '919447736460']);
+  settSheet.appendRow(['callmebot_apikey', '']);
+  settSheet.appendRow(['whatsapp_webhook_url', '']);
+  settSheet.appendRow(['instagram', 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==']);
+  settSheet.appendRow(['facebook', 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr']);
   settSheet.appendRow(['address', 'Kaithakod Junction, Vengalloor – Mangattukavala Bypass Road, Thodupuzha East PO, Pin: 685585, Kerala, India']);
-  settSheet.appendRow(['check_in_time', '2:00 PM']);
-  settSheet.appendRow(['check_out_time', '11:00 AM']);
+  settSheet.appendRow(['check_in_time', 'Flexible (24-Hour Cycle)']);
+  settSheet.appendRow(['check_out_time', '24 Hours from Check-in']);
   settSheet.appendRow(['timezone', TIMEZONE]);
   settSheet.appendRow(['pending_expiry_minutes', PENDING_EXPIRY_MINUTES]);
   settSheet.appendRow(['currency', '₹']);
@@ -863,10 +1429,10 @@ function initialSetup() {
 
   bookSheet.setConditionalFormatRules(rules);
 
-  // 6. Install Background 5-Minute Expiration Trigger
-  installTimeDrivenTriggers();
+  // 6. Install Background 5-Minute Expiration Trigger & Spreadsheet onEdit Trigger
+  installAllTriggers();
 
-  Logger.log('Nandhanam Elite Google Sheet initial setup with Color-Coded Status Chips installed!');
+  Logger.log('Nandhanam Elite Google Sheet initial setup with Color-Coded Status Chips and automated triggers installed!');
 }
 
 /**
@@ -912,4 +1478,36 @@ function parseDateString(dateVal) {
   }
   var d = new Date(str);
   return isNaN(d.getTime()) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+/**
+ * 🧪 Test Function: Run this directly in Google Apps Script to authorize & verify email sending
+ */
+function testSendSampleEmail() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var settings = getNotificationSettings(ss);
+  var sampleBooking = {
+    booking_id: 'TEST-BK-' + Utilities.formatDate(new Date(), TIMEZONE, 'yyyyMMdd-HHmmss'),
+    room_id: 'R001',
+    room_name: 'AC Room',
+    guest_name: 'Test Guest',
+    phone: '+91 94477 36460',
+    email: settings.admin_notification_email || 'nandhanamelite@gmail.com',
+    check_in: Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd'),
+    check_out: Utilities.formatDate(new Date(Date.now() + 86400000), TIMEZONE, 'yyyy-MM-dd'),
+    adults: 2,
+    children: 0,
+    total_guests: 2,
+    total_nights: 1,
+    price_per_night: 1699,
+    total_amount: 1699,
+    notes: 'Test email alert trigger from Google Apps Script editor',
+    status: 'Pending',
+    created_at: getFormattedTimestamp()
+  };
+
+  Logger.log('📧 Sending Test Admin Alert Email to: ' + sampleBooking.email);
+  sendAdminNotificationEmail(sampleBooking, settings);
+  sendGuestReceiptEmail(sampleBooking, settings);
+  Logger.log('✅ Test Emails successfully sent to ' + sampleBooking.email + '! Check your Gmail inbox.');
 }

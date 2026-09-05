@@ -18,9 +18,6 @@ nandhanamelite/
 │   └── script.js                # Frontend booking engine & Google Sheets dynamic sync
 ├── backend/
 │   └── google_apps_script.js    # Backend Google Apps Script Web App API (15s LockService)
-├── docs/
-│   ├── OWNER_GUIDE.md           # Visual, non-technical control panel manual for property owners
-│   └── SETUP_GUIDE.md           # Developer setup & Google Apps Script deployment instructions
 ├── index.html                   # Semantic HTML5 frontend with full Meta SEO & JSON-LD Schemas
 ├── manifest.json                # PWA / Mobile Web App manifest configuration
 ├── robots.txt                   # Crawler indexing directives for Googlebot, Bingbot, etc.
@@ -76,7 +73,7 @@ STAY OWNER (Manages 100% through Google Sheets & WhatsApp)
 
 ### 4. Structured Data (JSON-LD Schemas)
 * **`LodgingBusiness` / `Hotel` Schema**:
-  * Formal business name, phone (`+91 94470 00000`), email (`nandhanamelite@gmail.com`), price range (`₹1500 - ₹3200`), payment methods (UPI, Cash, Google Pay, Bank Transfer), check-in (2:00 PM) / check-out (11:00 AM), address, coordinates, and full room catalog offers.
+  * Formal business name, phone (`+91 94477 36460`), email (`nandhanamelite@gmail.com`), price range (`₹1500 - ₹3200`), payment methods (UPI, Cash, Google Pay, Bank Transfer), 24-Hour check-in & check-out policy (calculated 24 hours from arrival), address, coordinates, and full room catalog offers.
 * **`FAQPage` Schema**:
   * Rich FAQ snippets for Google search results covering check-in timings, WhatsApp payment confirmation, and free on-site parking.
 

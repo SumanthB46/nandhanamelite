@@ -650,6 +650,134 @@ section[id],
   height: 48px;
   width: 100%;
   border-radius: 3px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative;
+  overflow: hidden;
+  padding: 0 16px !important;
+  line-height: 1 !important;
+  text-align: center;
+}
+
+.btn-check-now .btn-text {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.btn-check-now .btn-spinner {
+  display: none !important;
+}
+
+.btn-check-now.is-loading .btn-text {
+  display: none !important;
+}
+
+.btn-check-now.is-loading .btn-spinner {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
+
+/* Interactive Animated Sandglass Loader (From Uiverse.io by JaydipPrajapati1910) */
+.loader-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+}
+
+.loader {
+  box-sizing: border-box;
+  display: block;
+  width: 20px;
+  height: 32px;
+  border-top: 3px solid #111827;
+  border-bottom: 3px solid #111827;
+  position: relative;
+  background: linear-gradient(#111827 12px, transparent 0) no-repeat;
+  background-size: 2px 16px;
+  background-position: 50% 0px;
+  animation: spinx 2.5s linear infinite;
+  margin: 0;
+}
+
+.loader:before,
+.loader:after {
+  content: "";
+  width: 16px;
+  left: 50%;
+  height: 13px;
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  background: rgba(17, 24, 39, 0.22);
+  border-radius: 0 0 8px 8px;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  background-position: 0 0px;
+  animation: lqt 2.5s linear infinite;
+}
+
+.loader:after {
+  top: auto;
+  bottom: 0;
+  border-radius: 8px 8px 0 0;
+  animation: lqb 2.5s linear infinite;
+}
+
+@keyframes lqt {
+  0%, 100% {
+    background-image: linear-gradient(#111827 16px, transparent 0);
+    background-position: 0% 0px;
+  }
+
+  50% {
+    background-image: linear-gradient(#111827 16px, transparent 0);
+    background-position: 0% 16px;
+  }
+
+  50.1% {
+    background-image: linear-gradient(#111827 16px, transparent 0);
+    background-position: 0% -16px;
+  }
+}
+
+@keyframes lqb {
+  0% {
+    background-image: linear-gradient(#111827 16px, transparent 0);
+    background-position: 0 16px;
+  }
+
+  100% {
+    background-image: linear-gradient(#111827 16px, transparent 0);
+    background-position: 0 -16px;
+  }
+}
+
+@keyframes spinx {
+  0%, 49% {
+    transform: rotate(0deg);
+    background-position: 50% 14px;
+  }
+
+  51%, 98% {
+    transform: rotate(180deg);
+    background-position: 50% 2px;
+  }
+
+  100% {
+    transform: rotate(360deg);
+    background-position: 50% 14px;
+  }
 }
 
 .availability-status-banner {
@@ -811,19 +939,32 @@ section[id],
 
 .rooms-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
+  grid-template-columns: repeat(2, minmax(380px, 550px));
+  justify-content: center;
+  align-items: stretch;
+  gap: 40px;
+  max-width: 1160px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (max-width: 960px) and (min-width: 769px) {
+  .rooms-grid {
+    grid-template-columns: repeat(2, minmax(300px, 1fr));
+    gap: 20px;
+  }
 }
 
 .room-card {
   background: #FFFFFF;
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
   box-shadow: var(--shadow-md);
   transition: var(--transition-smooth);
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border-subtle);
+  width: 100%;
 }
 
 .room-card:hover {
@@ -834,7 +975,7 @@ section[id],
 .room-img-wrap {
   position: relative;
   width: 100%;
-  height: 230px;
+  height: 280px;
   overflow: hidden;
 }
 
@@ -932,6 +1073,9 @@ section[id],
 }
 
 .room-features-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 14px;
   margin-bottom: 18px;
   flex: 1;
 }
@@ -939,16 +1083,18 @@ section[id],
 .room-features-list li {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-size: 0.82rem;
   color: var(--text-dark-muted);
-  margin-bottom: 6px;
+  margin-bottom: 0;
+  line-height: 1.35;
 }
 
 .check-icon {
   color: var(--primary-gold-dark);
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  flex-shrink: 0;
 }
 
 .room-pricing-row {
@@ -2332,6 +2478,46 @@ section[id],
 .step-item.active .step-num {
   background: var(--status-available);
   color: #FFFFFF;
+}
+
+.sent-to-admin-alert {
+  background: rgba(46, 125, 50, 0.08);
+  border: 1px solid rgba(46, 125, 50, 0.25);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 18px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.sent-to-admin-alert .alert-check-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--status-available);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.sent-to-admin-alert .alert-text strong {
+  display: block;
+  color: var(--status-available);
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+.sent-to-admin-alert .alert-text span {
+  font-size: 0.85rem;
+  color: var(--text-dark-muted);
+  line-height: 1.4;
+  display: block;
 }
 
 .confirmation-actions {
