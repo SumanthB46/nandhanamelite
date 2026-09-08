@@ -29,7 +29,17 @@ Options -Indexes
   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript
   AddOutputFilterByType DEFLATE application/xml application/xhtml+xml application/rss+xml
   AddOutputFilterByType DEFLATE application/javascript application/x-javascript application/json
-  AddOutputFilterByType DEFLATE image/svg+xml
+  AddOutputFilterByType DEFLATE image/svg+xml font/woff font/woff2 application/vnd.ms-fontobject font/otf
+</IfModule>
+
+# 4b. Explicit Cache-Control Headers for Static Assets
+<IfModule mod_headers.c>
+  <FilesMatch "\.(ico|jpe?g|png|gif|webp|svg|woff2?|ttf|otf)$">
+    Header set Cache-Control "max-age=31536000, public, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "max-age=31536000, public"
+  </FilesMatch>
 </IfModule>
 
 # 5. Browser Caching (Speeds up repeat visits)

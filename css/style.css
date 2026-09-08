@@ -1176,6 +1176,16 @@ section[id],
   display: none;
 }
 
+/* Below-the-fold render optimization for FCP & Speed Index */
+.amenities-section,
+.policies-section,
+.location-section,
+.reviews-section,
+.gallery-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
+}
+
 /* ==========================================================================
    6. AMENITIES SECTION
    ========================================================================== */
