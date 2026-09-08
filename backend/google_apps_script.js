@@ -1302,6 +1302,7 @@ function handleGetSettings() {
       instagram: 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==',
       facebook: 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr',
       address: 'Annz Colors, Vengalloor - Mangattukavala Bypass Rd, Thodupuzha, Kerala 685585',
+      landline: '04862- 226460',
       check_in_time: 'Flexible (24-Hour Cycle)',
       check_out_time: '24 Hours from Check-in',
       timezone: TIMEZONE,
@@ -1358,6 +1359,7 @@ function syncSettingsSheet() {
   settSheet.appendRow(['instagram', 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==']);
   settSheet.appendRow(['facebook', 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr']);
   settSheet.appendRow(['address', 'Annz Colors, Vengalloor - Mangattukavala Bypass Rd, Thodupuzha, Kerala 685585']);
+  settSheet.appendRow(['landline', '04862- 226460']);
   settSheet.appendRow(['check_in_time', 'Flexible (24-Hour Cycle)']);
   settSheet.appendRow(['check_out_time', '24 Hours from Check-in']);
   settSheet.appendRow(['timezone', TIMEZONE]);

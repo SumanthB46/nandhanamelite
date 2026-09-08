@@ -343,15 +343,45 @@ function applySettingsToDOM(settings) {
     link.href = `https://wa.me/${waInfo.wa}?text=Hello%20Nandhanam%20Elite,%20I%20would%20like%20to%20enquire%20about%20room%20availability.`;
   });
 
-  // Update phone tel: links and text
-  const telLinks = document.querySelectorAll('a[href*="tel:"]');
-  telLinks.forEach(link => {
-    link.href = `tel:${phoneInfo.tel}`;
-  });
-  const phoneValEls = document.querySelectorAll('.footer-info-val');
-  phoneValEls.forEach(el => el.textContent = phoneInfo.display);
-  const helplineCallEl = document.querySelector('.btn-helpline-call span');
-  if (helplineCallEl) helplineCallEl.textContent = `📞 Call ${phoneInfo.display}`;
+  // Update footer mobile contact
+  const footerMobileLink = document.getElementById('footerMobileLink');
+  if (footerMobileLink) footerMobileLink.href = `tel:${phoneInfo.tel}`;
+  const footerMobileVal = document.getElementById('footerMobileVal');
+  if (footerMobileVal) footerMobileVal.textContent = phoneInfo.display;
+
+  // Update footer landline (if configured, otherwise keeps default)
+  if (settings.landline) {
+    const footerLandlineLink = document.getElementById('footerLandlineLink');
+    if (footerLandlineLink) footerLandlineLink.href = `tel:${String(settings.landline).replace(/[^0-9+]/g, '')}`;
+    const footerLandlineVal = document.getElementById('footerLandlineVal');
+    if (footerLandlineVal) footerLandlineVal.textContent = settings.landline;
+  }
+
+  // Update property email
+  const email = settings.email || PROPERTY_EMAIL;
+  if (email) {
+    const footerEmailLink = document.getElementById('footerEmailLink');
+    if (footerEmailLink) footerEmailLink.href = `mailto:${email}`;
+    const footerEmailVal = document.getElementById('footerEmailVal');
+    if (footerEmailVal) footerEmailVal.textContent = email;
+  }
+
+  // Update property address
+  const address = settings.address;
+  if (address) {
+    const footerAddressVal = document.getElementById('footerAddressVal');
+    if (footerAddressVal) footerAddressVal.textContent = address;
+    const footerAddressLink = document.getElementById('footerAddressLink');
+    if (footerAddressLink) footerAddressLink.href = `https://maps.google.com/?q=${encodeURIComponent(address)}`;
+  }
+
+  // Update helpline call CTA button
+  const helplineBtn = document.querySelector('.btn-helpline-call');
+  if (helplineBtn) {
+    helplineBtn.href = `tel:${phoneInfo.tel}`;
+    const helplineCallEl = helplineBtn.querySelector('span');
+    if (helplineCallEl) helplineCallEl.textContent = `📞 Call ${phoneInfo.display}`;
+  }
 
   // Update check-in / check-out hints cleanly (preventing 1899 epoch strings)
   const checkinTime = formatTimeClean(settings.check_in_time, '24-Hour Flexible Check-in');
@@ -361,13 +391,6 @@ function applySettingsToDOM(settings) {
   if (inHint) inHint.textContent = checkinTime.includes('24') ? checkinTime : `From ${checkinTime}`;
   const outHint = document.querySelector('label[for="checkoutDate"] + .input-with-icon + .input-hint');
   if (outHint) outHint.textContent = checkoutTime.includes('24') ? checkoutTime : `Until ${checkoutTime}`;
-
-  // Update property email
-  const email = settings.email || PROPERTY_EMAIL;
-  if (email) {
-    const emailEls = document.querySelectorAll('.footer-info-list li:nth-child(2) span:last-child');
-    emailEls.forEach(el => el.textContent = email);
-  }
 
   // Update social links if configured
   const instagram = settings.instagram || PROPERTY_INSTAGRAM;
