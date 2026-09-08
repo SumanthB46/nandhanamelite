@@ -222,14 +222,30 @@ function handleGetRooms() {
       var status = statusIdx >= 0 ? String(row[statusIdx]).trim() : 'Active';
 
       if (status.toLowerCase() === 'active') {
+        var rId = idIdx >= 0 ? String(row[idIdx]).trim() : 'R00' + i;
+        var rName = nameIdx >= 0 ? String(row[nameIdx]).trim() : 'Room ' + i;
+        var rawImg = imgIdx >= 0 ? String(row[imgIdx]).trim() : '';
+
+        // Normalize legacy Unsplash placeholder URLs to new real photos
+        var isNonAc = (rId === 'R002' || rName.toLowerCase().indexOf('non') !== -1);
+        var defaultRealImg = isNonAc ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
+        var cleanImg = (!rawImg || rawImg.indexOf('unsplash.com') !== -1) ? defaultRealImg : rawImg;
+
+        // Auto-fix the spreadsheet cell in Google Sheets if it contains old Unsplash link
+        if (rawImg && rawImg.indexOf('unsplash.com') !== -1 && imgIdx >= 0) {
+          try {
+            sheet.getRange(i + 1, imgIdx + 1).setValue(cleanImg);
+          } catch (updateErr) {}
+        }
+
         rooms.push({
-          room_id: idIdx >= 0 ? String(row[idIdx]).trim() : 'R00' + i,
-          room_name: nameIdx >= 0 ? String(row[nameIdx]).trim() : 'Room ' + i,
+          room_id: rId,
+          room_name: rName,
           description: descIdx >= 0 ? String(row[descIdx]) : '',
           price_per_night: priceIdx >= 0 ? Number(row[priceIdx]) : 0,
           capacity: capIdx >= 0 ? Number(row[capIdx]) : 2,
           amenities: amenitiesIdx >= 0 ? String(row[amenitiesIdx]).split(',').map(function (s) { return s.trim(); }) : [],
-          image_url: imgIdx >= 0 ? String(row[imgIdx]) : '',
+          image_url: cleanImg,
           status: status
         });
       }
@@ -1367,6 +1383,30 @@ function syncSettingsSheet() {
   settSheet.appendRow(['currency', '₹']);
 
   Logger.log('✅ Settings sheet successfully refreshed!');
+}
+
+/**
+ * 1-Click Sync to update old Unsplash URLs in Rooms Sheet with real asset paths
+ */
+function syncRoomImagesInSheet() {
+  var ss = getTargetSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_ROOMS);
+  if (!sheet || sheet.getLastRow() <= 1) return;
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0].map(function (h) { return String(h).trim().toLowerCase(); });
+  var idIdx = headers.indexOf('room_id');
+  var nameIdx = headers.indexOf('room_name');
+  var imgIdx = headers.indexOf('image_url');
+  if (imgIdx === -1) return;
+
+  for (var i = 1; i < rows.length; i++) {
+    var id = idIdx >= 0 ? String(rows[i][idIdx]).trim() : '';
+    var name = nameIdx >= 0 ? String(rows[i][nameIdx]).trim() : '';
+    var isNonAc = (id === 'R002' || name.toLowerCase().indexOf('non') !== -1);
+    var realImg = isNonAc ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
+    sheet.getRange(i + 1, imgIdx + 1).setValue(realImg);
+  }
+  Logger.log('✅ Room images successfully synced in Rooms Sheet to real property photos!');
 }
 
 /**

@@ -1422,6 +1422,13 @@ section[id],
   box-shadow: var(--shadow-md);
 }
 
+/* On desktop, hide item 4 initially so only 3 images show */
+@media (min-width: 769px) {
+  .gallery-grid:not(.is-expanded) .gallery-item-4 {
+    display: none !important;
+  }
+}
+
 .gallery-item.gallery-hidden {
   display: none !important;
 }
@@ -2836,8 +2843,20 @@ section[id],
       grid-template-columns: 1fr;
     }
 
+    /* Mobile View: 2x2 grid showing 4 images initially */
     .gallery-grid {
       grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .gallery-item {
+      height: 165px;
+      border-radius: 8px;
+    }
+
+    .gallery-grid:not(.is-expanded) .gallery-item-4 {
+      display: block !important;
     }
 
     .reviews-section {

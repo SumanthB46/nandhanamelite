@@ -203,14 +203,18 @@ async function fetchAndApplyRoomsAndSettings() {
       if (data && data.status === 'success' && Array.isArray(data.rooms) && data.rooms.length > 0) {
         // Update ROOMS_DATA cache
         data.rooms.forEach(r => {
-          const defaultImg = (r.room_id === 'R002' || (r.room_name && r.room_name.toUpperCase().includes('NON'))) ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
+          const isNonAc = r.room_id === 'R002' || (r.room_name && r.room_name.toUpperCase().includes('NON'));
+          const defaultRealImg = isNonAc ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
+          const validImg = (r.image_url && !r.image_url.includes('unsplash')) ? r.image_url : defaultRealImg;
+          r.image_url = validImg; // Always ensure real property image is used
+
           ROOMS_DATA[r.room_id] = {
             id: r.room_id,
             name: r.room_name,
-            tag: r.room_name.toUpperCase().includes('NON') ? 'NATURAL VENTILATION' : (r.room_name.toUpperCase().includes('AC') ? 'AIR CONDITIONED' : 'COMFORT ROOM'),
+            tag: isNonAc ? 'NATURAL VENTILATION' : (r.room_name.toUpperCase().includes('AC') ? 'AIR CONDITIONED' : 'COMFORT ROOM'),
             price: Number(r.price_per_night) || 0,
             capacity: Number(r.capacity) || 2,
-            img: (r.image_url && !r.image_url.includes('unsplash')) ? r.image_url : (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].img : defaultImg),
+            img: validImg,
             desc: r.description || (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].desc : ''),
             amenities: (r.amenities && r.amenities.length > 0) ? r.amenities : (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].amenities : ['Wi-Fi', 'Attached Bathroom', '24/7 Hot Water'])
           };
@@ -254,9 +258,9 @@ function renderRoomsGrid(rooms) {
     card.setAttribute('data-capacity', String(room.capacity));
     card.setAttribute('data-price', String(room.price_per_night));
 
-    const tag = room.room_name.toUpperCase().includes('NON') ? 'NATURAL VENTILATION' : (room.room_name.toUpperCase().includes('AC') ? 'AIR CONDITIONED' : 'COMFORT ROOM');
-    const defaultImg = (room.room_id === 'R002' || room.room_name.toUpperCase().includes('NON')) ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
-    const imgUrl = (room.image_url && !room.image_url.includes('unsplash')) ? room.image_url : (ROOMS_DATA[room.room_id] ? ROOMS_DATA[room.room_id].img : defaultImg);
+    const isNonAc = room.room_id === 'R002' || (room.room_name && room.room_name.toUpperCase().includes('NON'));
+    const defaultRealImg = isNonAc ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
+    const imgUrl = (room.image_url && !room.image_url.includes('unsplash')) ? room.image_url : defaultRealImg;
     const amenitiesArr = Array.isArray(room.amenities) ? room.amenities : [];
 
     let amenitiesHtml = '';
@@ -1596,9 +1600,9 @@ function initGalleryLightbox() {
     });
 
     if (viewMorePhotosBtn) {
-      let isExpanded = false;
+      const galleryGrid = document.querySelector('.gallery-grid');
       viewMorePhotosBtn.addEventListener('click', () => {
-        isExpanded = !isExpanded;
+        const isExpanded = galleryGrid ? galleryGrid.classList.toggle('is-expanded') : false;
         const extraItems = document.querySelectorAll('.gallery-grid .gallery-item:nth-child(n+4)');
 
         extraItems.forEach(item => {
@@ -1607,7 +1611,11 @@ function initGalleryLightbox() {
             item.classList.add('gallery-revealed');
           } else {
             item.classList.remove('gallery-revealed');
-            item.classList.add('gallery-hidden');
+            if (item.classList.contains('gallery-item-4')) {
+              // Handled by CSS media query (visible on mobile, hidden on desktop when collapsed)
+            } else {
+              item.classList.add('gallery-hidden');
+            }
           }
         });
 
