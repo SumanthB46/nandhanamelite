@@ -1596,9 +1596,28 @@ function initGalleryLightbox() {
     });
 
     if (viewMorePhotosBtn) {
+      let isExpanded = false;
       viewMorePhotosBtn.addEventListener('click', () => {
-        if (galleryItems.length > 0) {
-          galleryItems[0].click();
+        isExpanded = !isExpanded;
+        const extraItems = document.querySelectorAll('.gallery-grid .gallery-item:nth-child(n+4)');
+
+        extraItems.forEach(item => {
+          if (isExpanded) {
+            item.classList.remove('gallery-hidden');
+            item.classList.add('gallery-revealed');
+          } else {
+            item.classList.remove('gallery-revealed');
+            item.classList.add('gallery-hidden');
+          }
+        });
+
+        viewMorePhotosBtn.textContent = isExpanded ? 'SHOW LESS' : 'VIEW MORE PHOTOS';
+
+        if (!isExpanded) {
+          const gallerySection = document.getElementById('gallery');
+          if (gallerySection) {
+            gallerySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
         }
       });
     }
