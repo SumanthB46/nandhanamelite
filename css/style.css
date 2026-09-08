@@ -415,11 +415,17 @@ textarea {
 .hero-backdrop {
   position: absolute;
   inset: 0;
-  background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1920&q=80');
+  background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=750&q=70');
   background-size: cover;
   background-position: center;
   opacity: 0.35;
   transform: scale(1.05);
+}
+
+@media (min-width: 769px) {
+  .hero-backdrop {
+    background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1400&q=75');
+  }
 }
 
 .hero-overlay {
@@ -2725,66 +2731,34 @@ section[id],
 
     .rooms-grid {
       display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      overflow-y: hidden;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      gap: 16px;
-      padding: 10px 20px 24px;
-      margin: 0 -20px;
-      scrollbar-width: none;
-    }
-
-    .rooms-grid::-webkit-scrollbar {
-      display: none;
+      flex-direction: column;
+      gap: 28px;
+      padding: 0;
+      margin: 0 auto;
+      width: 100%;
+      max-width: 100%;
+      overflow: visible;
     }
 
     .rooms-grid .room-card {
-      flex: 0 0 85%;
-      max-width: 85%;
-      width: 85%;
-      scroll-snap-align: center;
+      flex: 1 1 auto;
+      width: 100%;
+      max-width: 100%;
       margin: 0;
+      box-sizing: border-box;
+      scroll-snap-align: none;
+    }
+
+    .rooms-grid .room-img-wrap {
+      height: 230px;
+    }
+
+    .rooms-grid .room-details {
+      padding: 22px 18px;
     }
 
     .rooms-mobile-swipe-indicator {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .swipe-hint-text {
-      font-size: 0.76rem;
-      color: var(--primary-gold-dark);
-      font-weight: 500;
-      letter-spacing: 0.5px;
-    }
-
-    .rooms-slider-dots {
-      display: flex;
-      gap: 6px;
-      justify-content: center;
-    }
-
-    .rooms-slider-dot,
-    .slider-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: rgba(197, 168, 128, 0.4);
-      transition: all 0.25s ease;
-      cursor: pointer;
-    }
-
-    .rooms-slider-dot.active,
-    .slider-dot.active {
-      width: 22px;
-      border-radius: 4px;
-      background: var(--primary-gold-dark);
+      display: none !important;
     }
 
     .amenities-grid {

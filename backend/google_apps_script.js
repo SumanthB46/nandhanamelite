@@ -936,7 +936,7 @@ function sendGuestReceiptEmail(b, settings) {
         '<div style="text-align: center; margin: 24px 0;">' +
           '<a href="https://wa.me/' + waClean + '?text=Hi%2C%20I%20have%20submitted%20booking%20' + encodeURIComponent(b.booking_id) + '%20for%20' + encodeURIComponent(b.room_name) + '." style="background-color: #25D366; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Chat with Host on WhatsApp</a>' +
         '</div>' +
-        '<p style="font-size: 13px; color: #6B7280;">Address: ' + (settings.address || 'Kaithakod Junction, Thodupuzha East PO, Kerala') + '<br>Contact: ' + helplineDisplay + '</p>' +
+        '<p style="font-size: 13px; color: #6B7280;">Address: ' + (settings.address || 'Annz Colors, Vengalloor - Mangattukavala Bypass Rd, Thodupuzha, Kerala 685585') + '<br>Contact: ' + helplineDisplay + '</p>' +
       '</div>' +
       '<div style="background-color: #F9FAFB; padding: 16px; text-align: center; font-size: 12px; color: #9CA3AF; border-top: 1px solid #E5E7EB;">' +
         'Thank you for staying with us &bull; Nandhanam Elite Homestay' +
@@ -1075,7 +1075,7 @@ function sendCustomerBookingConfirmedEmail(b, settings) {
         '</div>' +
         '<div style="background-color: #ECFDF5; border-left: 4px solid #10B981; padding: 12px 16px; margin-bottom: 20px; border-radius: 4px;">' +
           '<strong style="color: #065F46; font-size: 13px;">📍 Property Address & Directions</strong><br>' +
-          '<span style="font-size: 13px; color: #047857;">' + (settings.address || 'Kaithakod Junction, Vengalloor Bypass, Thodupuzha East PO, Pin: 685585, Kerala') + '</span>' +
+          '<span style="font-size: 13px; color: #047857;">' + (settings.address || 'Annz Colors, Vengalloor - Mangattukavala Bypass Rd, Thodupuzha, Kerala 685585') + '</span>' +
         '</div>' +
         '<div style="text-align: center; margin: 24px 0;">' +
           '<a href="https://wa.me/' + waClean + '?text=Hi%2C%20regarding%20my%20confirmed%20booking%20' + encodeURIComponent(b.booking_id) + '" style="background-color: #25D366; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Message Host on WhatsApp</a>' +
@@ -1118,7 +1118,7 @@ function sendCustomerWhatsAppConfirmation(b, settings) {
     '• *Total Cost:* ₹' + Number(b.total_amount || 0).toLocaleString('en-IN') + '\n' +
     '• *Amount Paid:* ₹' + advanceNum.toLocaleString('en-IN') + (isFullyPaid ? ' (Full Payment ✅)' : '') + '\n' +
     '• *Balance at Check-in:* ' + (isFullyPaid ? '₹0 (Paid in Full)' : '₹' + balanceNum.toLocaleString('en-IN')) + '\n\n' +
-    '📍 *Address:* ' + (settings.address || 'Kaithakod Junction, Thodupuzha East PO, Kerala') + '\n' +
+    '📍 *Address:* ' + (settings.address || 'Annz Colors, Vengalloor - Mangattukavala Bypass Rd, Thodupuzha, Kerala 685585') + '\n' +
     '📞 *Helpline:* ' + helplineDisplay + '\n' +
     '----------------------------------------\n' +
     'We look forward to hosting you at Nandhanam Elite!';
@@ -1301,7 +1301,7 @@ function handleGetSettings() {
       whatsapp_webhook_url: '',
       instagram: 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==',
       facebook: 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr',
-      address: 'Kaithakod Junction, Vengalloor – Mangattukavala Bypass Road, Thodupuzha East PO, Pin: 685585, Kerala, India',
+      address: 'Annz Colors, Vengalloor - Mangattukavala Bypass Rd, Thodupuzha, Kerala 685585',
       check_in_time: 'Flexible (24-Hour Cycle)',
       check_out_time: '24 Hours from Check-in',
       timezone: TIMEZONE,
@@ -1347,7 +1347,7 @@ function syncSettingsSheet() {
   settSheet.appendRow(['non_ac_rooms', '8']);
   settSheet.appendRow(['advance_required', '₹500']);
   settSheet.appendRow(['cancellation_policy', 'Free cancellation upto 48hrs before check-in']);
-  settSheet.appendRow(['housekeeping', 'Daily housekeeping / cleaning on req']);
+  settSheet.appendRow(['housekeeping', 'Daily housekeeping / cleaning on request']);
   settSheet.appendRow(['phone', '9447736460']);
   settSheet.appendRow(['whatsapp', '9447736460']);
   settSheet.appendRow(['email', 'nandhanamelite@gmail.com']);
@@ -1357,7 +1357,7 @@ function syncSettingsSheet() {
   settSheet.appendRow(['whatsapp_webhook_url', '']);
   settSheet.appendRow(['instagram', 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==']);
   settSheet.appendRow(['facebook', 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr']);
-  settSheet.appendRow(['address', 'Kaithakod Junction, Vengalloor – Mangattukavala Bypass Road, Thodupuzha East PO, Pin: 685585, Kerala, India']);
+  settSheet.appendRow(['address', 'Annz Colors, Vengalloor - Mangattukavala Bypass Rd, Thodupuzha, Kerala 685585']);
   settSheet.appendRow(['check_in_time', 'Flexible (24-Hour Cycle)']);
   settSheet.appendRow(['check_out_time', '24 Hours from Check-in']);
   settSheet.appendRow(['timezone', TIMEZONE]);
@@ -1389,14 +1389,14 @@ function initialSetup() {
     roomSheet.appendRow([
       'R001', 'AC Room',
       'Spacious air-conditioned room (8 rooms in property) with plush bedding, private modern attached bathroom, TV in every room, and scenic view.',
-      1699, 2, 'Air Conditioning, TV in every room, Attached Bathroom, 24/7 Hot Water, High-Speed Wi-Fi, Daily housekeeping / cleaning on req',
+      1699, 2, 'Air Conditioning, TV in every room, Attached Bathroom, 24/7 Hot Water, High-Speed Wi-Fi, Daily housekeeping / cleaning on request',
       'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
       'Active', nowStr, nowStr
     ]);
     roomSheet.appendRow([
       'R002', 'Non AC Comfort Room',
       'Well-ventilated comfortable double bedroom (8 rooms in property) with attached bathroom, TV in every room, and work desk.',
-      1299, 2, 'Natural Ventilation, TV in every room, Attached Bathroom, 24/7 Hot Water, Wi-Fi, Daily housekeeping / cleaning on req',
+      1299, 2, 'Natural Ventilation, TV in every room, Attached Bathroom, 24/7 Hot Water, Wi-Fi, Daily housekeeping / cleaning on request',
       'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=900&q=80',
       'Active', nowStr, nowStr
     ]);
@@ -1424,7 +1424,7 @@ function initialSetup() {
     settSheet.appendRow(['non_ac_rooms', '8']);
     settSheet.appendRow(['advance_required', '₹500']);
     settSheet.appendRow(['cancellation_policy', 'Free cancellation upto 48hrs before check-in']);
-    settSheet.appendRow(['housekeeping', 'Daily housekeeping / cleaning on req']);
+    settSheet.appendRow(['housekeeping', 'Daily housekeeping / cleaning on request']);
     settSheet.appendRow(['phone', '9447736460']);
     settSheet.appendRow(['whatsapp', '9447736460']);
     settSheet.appendRow(['email', 'nandhanamelite@gmail.com']);
@@ -1434,7 +1434,7 @@ function initialSetup() {
     settSheet.appendRow(['whatsapp_webhook_url', '']);
     settSheet.appendRow(['instagram', 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==']);
     settSheet.appendRow(['facebook', 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr']);
-    settSheet.appendRow(['address', 'Kaithakod Junction, Vengalloor – Mangattukavala Bypass Road, Thodupuzha East PO, Pin: 685585, Kerala, India']);
+    settSheet.appendRow(['address', 'Annz Colors, Vengalloor - Mangattukavala Bypass Rd, Thodupuzha, Kerala 685585']);
     settSheet.appendRow(['check_in_time', 'Flexible (24-Hour Cycle)']);
     settSheet.appendRow(['check_out_time', '24 Hours from Check-in']);
     settSheet.appendRow(['timezone', TIMEZONE]);
