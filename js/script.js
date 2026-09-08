@@ -27,7 +27,7 @@ const ROOMS_DATA = {
     tag: 'AIR CONDITIONED',
     price: 1699,
     capacity: 2,
-    img: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80',
+    img: 'assets/images/ac-room.jpg',
     desc: 'Spacious climate-controlled room featuring plush queen bedding, modern attached bathroom with 24/7 hot water, and quiet garden ambience. Ideal for couples, solo business executives, and small families.',
     amenities: ['Air Conditioning', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
   },
@@ -37,7 +37,7 @@ const ROOMS_DATA = {
     tag: 'NATURAL VENTILATION',
     price: 1299,
     capacity: 2,
-    img: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80',
+    img: 'assets/images/non-ac-room.jpg',
     desc: 'Well-ventilated, breezy double bedroom designed for budget-conscious travellers seeking clean, comfortable accommodation in central Thodupuzha.',
     amenities: ['Natural Ventilation', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
   }
@@ -203,13 +203,14 @@ async function fetchAndApplyRoomsAndSettings() {
       if (data && data.status === 'success' && Array.isArray(data.rooms) && data.rooms.length > 0) {
         // Update ROOMS_DATA cache
         data.rooms.forEach(r => {
+          const defaultImg = (r.room_id === 'R002' || (r.room_name && r.room_name.toUpperCase().includes('NON'))) ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
           ROOMS_DATA[r.room_id] = {
             id: r.room_id,
             name: r.room_name,
             tag: r.room_name.toUpperCase().includes('NON') ? 'NATURAL VENTILATION' : (r.room_name.toUpperCase().includes('AC') ? 'AIR CONDITIONED' : 'COMFORT ROOM'),
             price: Number(r.price_per_night) || 0,
             capacity: Number(r.capacity) || 2,
-            img: r.image_url || (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].img : 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80'),
+            img: (r.image_url && !r.image_url.includes('unsplash')) ? r.image_url : (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].img : defaultImg),
             desc: r.description || (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].desc : ''),
             amenities: (r.amenities && r.amenities.length > 0) ? r.amenities : (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].amenities : ['Wi-Fi', 'Attached Bathroom', '24/7 Hot Water'])
           };
@@ -254,7 +255,8 @@ function renderRoomsGrid(rooms) {
     card.setAttribute('data-price', String(room.price_per_night));
 
     const tag = room.room_name.toUpperCase().includes('NON') ? 'NATURAL VENTILATION' : (room.room_name.toUpperCase().includes('AC') ? 'AIR CONDITIONED' : 'COMFORT ROOM');
-    const imgUrl = room.image_url || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80';
+    const defaultImg = (room.room_id === 'R002' || room.room_name.toUpperCase().includes('NON')) ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
+    const imgUrl = (room.image_url && !room.image_url.includes('unsplash')) ? room.image_url : (ROOMS_DATA[room.room_id] ? ROOMS_DATA[room.room_id].img : defaultImg);
     const amenitiesArr = Array.isArray(room.amenities) ? room.amenities : [];
 
     let amenitiesHtml = '';

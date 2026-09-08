@@ -1392,14 +1392,14 @@ function initialSetup() {
       'R001', 'AC Room',
       'Spacious air-conditioned room (8 rooms in property) with plush bedding, private modern attached bathroom, TV in every room, and scenic view.',
       1699, 2, 'Air Conditioning, TV in every room, Attached Bathroom, 24/7 Hot Water, High-Speed Wi-Fi, Daily housekeeping / cleaning on request',
-      'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
+      'assets/images/ac-room.jpg',
       'Active', nowStr, nowStr
     ]);
     roomSheet.appendRow([
       'R002', 'Non AC Comfort Room',
       'Well-ventilated comfortable double bedroom (8 rooms in property) with attached bathroom, TV in every room, and work desk.',
       1299, 2, 'Natural Ventilation, TV in every room, Attached Bathroom, 24/7 Hot Water, Wi-Fi, Daily housekeeping / cleaning on request',
-      'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=900&q=80',
+      'assets/images/non-ac-room.jpg',
       'Active', nowStr, nowStr
     ]);
 
