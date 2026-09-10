@@ -257,75 +257,101 @@ async function fetchAndApplyRoomsAndSettings() {
 }
 
 /**
- * Dynamically Render Room Cards from Google Sheets Data
+ * Dynamically Render Room Cards from Google Sheets Data (Safe In-Place Update)
  */
 function renderRoomsGrid(rooms) {
   const grid = document.getElementById('roomsGrid');
   if (!grid || !Array.isArray(rooms) || rooms.length === 0) return;
 
-  grid.innerHTML = '';
-  rooms.forEach(room => {
-    const card = document.createElement('div');
-    card.className = 'room-card';
-    card.setAttribute('data-room-id', room.room_id);
-    card.setAttribute('data-capacity', String(room.capacity || 4));
-    card.setAttribute('data-price', String(room.price_per_night));
+  try {
+    rooms.forEach(room => {
+      let card = grid.querySelector(`.room-card[data-room-id="${room.room_id}"]`);
+      if (card) {
+        // Safe In-Place Update: NEVER wipe existing DOM cards
+        card.setAttribute('data-capacity', String(room.capacity || 4));
+        if (room.price_per_night) {
+          card.setAttribute('data-price', String(room.price_per_night));
+          const priceEl = card.querySelector('.price-value');
+          if (priceEl) priceEl.textContent = `₹${Number(room.price_per_night).toLocaleString('en-IN')}`;
+          const estEl = card.querySelector('.est-amount');
+          if (estEl) estEl.textContent = `₹${Number(room.price_per_night).toLocaleString('en-IN')}`;
+        }
+        const capChip = card.querySelector('.room-capacity-chip');
+        if (capChip) {
+          capChip.textContent = '2 Adults + 2 Children';
+        }
+        const bookBtn = card.querySelector('.book-room-btn');
+        if (bookBtn) {
+          if (room.price_per_night) bookBtn.setAttribute('data-room-price', String(room.price_per_night));
+          bookBtn.setAttribute('data-capacity', String(room.capacity || 4));
+        }
+      } else {
+        // If a brand new room is added in Google Sheets, build and append it
+        const newCard = document.createElement('div');
+        newCard.className = 'room-card';
+        newCard.setAttribute('data-room-id', room.room_id);
+        newCard.setAttribute('data-capacity', String(room.capacity || 4));
+        newCard.setAttribute('data-price', String(room.price_per_night));
 
-    const isNonAc = room.room_id === 'R002' || (room.room_name && room.room_name.toUpperCase().includes('NON'));
-    const defaultRealImg = isNonAc ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
-    const imgUrl = (room.image_url && !room.image_url.includes('unsplash')) ? room.image_url : defaultRealImg;
-    const tag = isNonAc ? 'NATURAL VENTILATION' : (room.room_name && room.room_name.toUpperCase().includes('AC') ? 'AIR CONDITIONED' : 'COMFORT ROOM');
-    const amenitiesArr = Array.isArray(room.amenities) ? room.amenities : [];
+        const isNonAc = room.room_id === 'R002' || (room.room_name && room.room_name.toUpperCase().includes('NON'));
+        const defaultRealImg = isNonAc ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
+        const imgUrl = (room.image_url && !room.image_url.includes('unsplash')) ? room.image_url : defaultRealImg;
+        const tag = isNonAc ? 'NATURAL VENTILATION' : (room.room_name && room.room_name.toUpperCase().includes('AC') ? 'AIR CONDITIONED' : 'COMFORT ROOM');
+        const amenitiesArr = Array.isArray(room.amenities) ? room.amenities : [];
 
-    let amenitiesHtml = '';
-    amenitiesArr.slice(0, 4).forEach(am => {
-      amenitiesHtml += `
-        <li>
-          <span class="check-icon">✓</span>
-          <span>${escapeHtml(am)}</span>
-        </li>`;
+        let amenitiesHtml = '';
+        amenitiesArr.slice(0, 4).forEach(am => {
+          amenitiesHtml += `
+            <li>
+              <span class="check-icon">✓</span>
+              <span>${escapeHtml(am)}</span>
+            </li>`;
+        });
+
+        newCard.innerHTML = `
+          <div class="room-img-wrap">
+            <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(room.room_name)}" class="room-img" loading="lazy">
+            <div class="room-tag">${escapeHtml(tag)}</div>
+            <div class="room-status-badge available" id="badge-${escapeHtml(room.room_id)}">Available</div>
+          </div>
+          <div class="room-details">
+            <div class="room-header-meta">
+              <h3 class="room-type">${escapeHtml(room.room_name.toUpperCase())}</h3>
+              <span class="room-capacity-chip">2 Adults + 2 Children</span>
+            </div>
+            <p class="room-short-desc">${escapeHtml(room.description || '')}</p>
+            <ul class="room-features-list">
+              ${amenitiesHtml}
+            </ul>
+            
+            <div class="room-pricing-row">
+              <div class="room-pricing">
+                <span class="from-text">RATE </span>
+                <span class="price-value" id="price-${escapeHtml(room.room_id)}">₹${Number(room.price_per_night).toLocaleString('en-IN')}</span>
+                <span class="period"> / NIGHT</span>
+              </div>
+              <div class="total-estimate" id="estimate-${escapeHtml(room.room_id)}" style="display:none;">
+                <span class="est-label">Total for stay:</span>
+                <span class="est-amount">₹${Number(room.price_per_night).toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+
+            <div class="room-card-actions">
+              <button class="btn btn-outline-room view-details-btn" data-room-id="${escapeHtml(room.room_id)}">VIEW DETAILS</button>
+              <button class="btn btn-dark-full book-room-btn" data-room-id="${escapeHtml(room.room_id)}" data-room-name="${escapeHtml(room.room_name)}" data-room-price="${escapeHtml(String(room.price_per_night))}" data-capacity="4">SELECT & BOOK</button>
+            </div>
+          </div>
+        `;
+
+        grid.appendChild(newCard);
+      }
     });
 
-    card.innerHTML = `
-      <div class="room-img-wrap">
-        <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(room.room_name)}" class="room-img" loading="lazy">
-        <div class="room-tag">${escapeHtml(tag)}</div>
-        <div class="room-status-badge available" id="badge-${escapeHtml(room.room_id)}">Available</div>
-      </div>
-      <div class="room-details">
-        <div class="room-header-meta">
-          <h3 class="room-type">${escapeHtml(room.room_name.toUpperCase())}</h3>
-          <span class="room-capacity-chip">2 Adults + 2 Children</span>
-        </div>
-        <p class="room-short-desc">${escapeHtml(room.description || '')}</p>
-        <ul class="room-features-list">
-          ${amenitiesHtml}
-        </ul>
-        
-        <div class="room-pricing-row">
-          <div class="room-pricing">
-            <span class="from-text">RATE </span>
-            <span class="price-value" id="price-${escapeHtml(room.room_id)}">₹${Number(room.price_per_night).toLocaleString('en-IN')}</span>
-            <span class="period"> / NIGHT</span>
-          </div>
-          <div class="total-estimate" id="estimate-${escapeHtml(room.room_id)}" style="display:none;">
-            <span class="est-label">Total for stay:</span>
-            <span class="est-amount">₹${Number(room.price_per_night).toLocaleString('en-IN')}</span>
-          </div>
-        </div>
-
-        <div class="room-card-actions">
-          <button class="btn btn-outline-room view-details-btn" data-room-id="${escapeHtml(room.room_id)}">VIEW DETAILS</button>
-          <button class="btn btn-dark-full book-room-btn" data-room-id="${escapeHtml(room.room_id)}" data-room-name="${escapeHtml(room.room_name)}" data-room-price="${escapeHtml(String(room.price_per_night))}" data-capacity="4">SELECT & BOOK</button>
-        </div>
-      </div>
-    `;
-
-    grid.appendChild(card);
-  });
-
-  // Re-bind click event listeners to new cards
-  initRoomCardsEvents();
+    // Re-bind click event listeners safely
+    initRoomCardsEvents();
+  } catch (err) {
+    console.warn('[renderRoomsGrid Notice]:', err);
+  }
 }
 
 /**
