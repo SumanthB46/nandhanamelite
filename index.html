@@ -49,24 +49,24 @@
   <link rel="apple-touch-icon" href="assets/images/Logo.png">
 
   <!-- ================= CRITICAL LCP ASSET PRELOAD ================= -->
-  <link rel="preload" href="css/style.css?v=12.0" as="style">
+  <link rel="preload" href="css/style.css?v=13.0" as="style">
 
   <!-- ================= OPTIMIZED GOOGLE FONTS (NON-BLOCKING) ================= -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style"
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+    href="https://fonts.googleapis.com/css2?family=Cinzel:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
   <link
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet" media="print" onload="this.media='all'">
   <noscript>
     <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet">
   </noscript>
 
   <!-- ================= MAIN STYLESHEET ================= -->
-  <link rel="stylesheet" href="css/style.css?v=12.0">
+  <link rel="stylesheet" href="css/style.css?v=13.0">
 
   <!-- ================= JSON-LD STRUCTURED DATA SCHEMA ================= -->
   <script type="application/ld+json">
@@ -337,8 +337,8 @@
               <select id="guestCount" required>
                 <option value="1">1 Guest</option>
                 <option value="2" selected>2 Guests (1 Room)</option>
-                <option value="3">3 Guests (1–2 Rooms)</option>
-                <option value="4">4 Guests (1–2 Rooms)</option>
+                <option value="3">3 Guests (1–2 Rooms • Kids &lt;12 yrs)</option>
+                <option value="4">4 Guests (1–2 Rooms • Kids &lt;12 yrs)</option>
               </select>
             </div>
             <span class="input-hint" id="stayDurationHint">1 Night (24-Hour Stay)</span>
@@ -447,16 +447,50 @@
       <div class="rooms-grid" id="roomsGrid">
         <!-- Room 1: AC Room (R001) -->
         <div class="room-card" data-room-id="R001" data-capacity="4" data-price="1699">
-          <div class="room-img-wrap">
-            <img src="assets/images/ac-room.jpg"
-              alt="AC Double Bedroom" class="room-img" loading="lazy" decoding="async">
+          <div class="room-img-wrap" data-current-slide="0">
+            <div class="room-slides-track">
+              <div class="room-slide active" data-index="0" data-caption="Executive AC Bedroom with Double Bed &amp; Desk">
+                <img src="assets/images/ac-room.jpg"
+                  alt="Executive AC Bedroom" class="room-img" loading="lazy" decoding="async">
+              </div>
+              <div class="room-slide" data-index="1" data-caption="Luxury Double Bedroom Overview &amp; Wardrobe">
+                <img src="assets/images/ac-room-view.jpg"
+                  alt="AC Bedroom Overview" class="room-img" loading="lazy" decoding="async">
+              </div>
+              <div class="room-slide" data-index="2" data-caption="Ambient Cove Ceiling Lighting &amp; TV">
+                <img src="assets/images/room-ceiling-tv.jpg"
+                  alt="Ceiling &amp; TV" class="room-img" loading="lazy" decoding="async">
+              </div>
+              <div class="room-slide" data-index="3" data-caption="Sparkling Attached Bathroom with Shower">
+                <img src="assets/images/bathroom.jpg"
+                  alt="Attached Bathroom" class="room-img" loading="lazy" decoding="async">
+              </div>
+            </div>
             <div class="room-tag">AIR CONDITIONED</div>
             <div class="room-status-badge available" id="badge-R001">Available</div>
+            <button type="button" class="room-slider-nav prev" aria-label="Previous Photo" title="Previous Photo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button type="button" class="room-slider-nav next" aria-label="Next Photo" title="Next Photo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+            <div class="room-slider-controls">
+              <div class="room-slider-dots-mini">
+                <span class="room-dot active" data-slide="0"></span>
+                <span class="room-dot" data-slide="1"></span>
+                <span class="room-dot" data-slide="2"></span>
+                <span class="room-dot" data-slide="3"></span>
+              </div>
+              <div class="room-photo-badge">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <span class="room-photo-counter">1 / 4</span>
+              </div>
+            </div>
           </div>
           <div class="room-details">
             <div class="room-header-meta">
               <h3 class="room-type">AC ROOM</h3>
-              <span class="room-capacity-chip">2 Adults + 2 Children</span>
+              <span class="room-capacity-chip">2 Adults + 2 Children (&lt;12 yrs)</span>
             </div>
             <p class="room-short-desc">Spacious climate-controlled room featuring plush queen bedding, attached
               bathroom, and quiet garden ambience.</p>
@@ -464,6 +498,10 @@
               <li>
                 <span class="check-icon">✓</span>
                 <span>Air Conditioning</span>
+              </li>
+              <li>
+                <span class="check-icon">✓</span>
+                <span>Complimentary Breakfast</span>
               </li>
               <li>
                 <span class="check-icon">✓</span>
@@ -476,6 +514,10 @@
               <li>
                 <span class="check-icon">✓</span>
                 <span>24/7 Hot Water</span>
+              </li>
+              <li>
+                <span class="check-icon">✓</span>
+                <span>High-Speed Wi-Fi</span>
               </li>
             </ul>
 
@@ -501,16 +543,50 @@
 
         <!-- Room 2: Non AC Comfort Room (R002) -->
         <div class="room-card" data-room-id="R002" data-capacity="4" data-price="1299">
-          <div class="room-img-wrap">
-            <img src="assets/images/non-ac-room.jpg"
-              alt="Non AC Comfortable Bedroom" class="room-img" loading="lazy" decoding="async">
+          <div class="room-img-wrap" data-current-slide="0">
+            <div class="room-slides-track">
+              <div class="room-slide active" data-index="0" data-caption="Non-AC Comfort Bedroom with Teak Wood Finish">
+                <img src="assets/images/non-ac-room.jpg"
+                  alt="Non AC Comfortable Bedroom" class="room-img" loading="lazy" decoding="async">
+              </div>
+              <div class="room-slide" data-index="1" data-caption="Comfort Bedroom with Wall-Mounted TV &amp; Desk">
+                <img src="assets/images/comfort-room-tv.jpg"
+                  alt="Comfort Room with TV &amp; Desk" class="room-img" loading="lazy" decoding="async">
+              </div>
+              <div class="room-slide" data-index="2" data-caption="Spacious Bedroom Interior with Dressing Mirror">
+                <img src="assets/images/room-dressing.jpg"
+                  alt="Dressing Mirror &amp; Interior" class="room-img" loading="lazy" decoding="async">
+              </div>
+              <div class="room-slide" data-index="3" data-caption="Sparkling Attached Bathroom with Shower">
+                <img src="assets/images/bathroom.jpg"
+                  alt="Attached Bathroom" class="room-img" loading="lazy" decoding="async">
+              </div>
+            </div>
             <div class="room-tag">NATURAL VENTILATION</div>
             <div class="room-status-badge available" id="badge-R002">Available</div>
+            <button type="button" class="room-slider-nav prev" aria-label="Previous Photo" title="Previous Photo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button type="button" class="room-slider-nav next" aria-label="Next Photo" title="Next Photo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+            <div class="room-slider-controls">
+              <div class="room-slider-dots-mini">
+                <span class="room-dot active" data-slide="0"></span>
+                <span class="room-dot" data-slide="1"></span>
+                <span class="room-dot" data-slide="2"></span>
+                <span class="room-dot" data-slide="3"></span>
+              </div>
+              <div class="room-photo-badge">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <span class="room-photo-counter">1 / 4</span>
+              </div>
+            </div>
           </div>
           <div class="room-details">
             <div class="room-header-meta">
               <h3 class="room-type">NON AC COMFORT ROOM</h3>
-              <span class="room-capacity-chip">2 Adults + 2 Children</span>
+              <span class="room-capacity-chip">2 Adults + 2 Children (&lt;12 yrs)</span>
             </div>
             <p class="room-short-desc">Well-ventilated, breezy double bedroom designed for budget-conscious travellers
               seeking clean, peaceful accommodation.</p>
@@ -518,6 +594,10 @@
               <li>
                 <span class="check-icon">✓</span>
                 <span>Natural Ventilation</span>
+              </li>
+              <li>
+                <span class="check-icon">✓</span>
+                <span>Complimentary Breakfast</span>
               </li>
               <li>
                 <span class="check-icon">✓</span>
@@ -530,6 +610,10 @@
               <li>
                 <span class="check-icon">✓</span>
                 <span>24/7 Hot Water</span>
+              </li>
+              <li>
+                <span class="check-icon">✓</span>
+                <span>High-Speed Wi-Fi</span>
               </li>
             </ul>
 
@@ -812,74 +896,8 @@
       </div>
 
       <div class="gallery-grid">
-        <!-- Image 1: Executive AC Bedroom -->
+        <!-- Photo 1: Reception Desk -->
         <div class="gallery-item"
-          data-img="assets/images/ac-room.jpg"
-          data-caption="Executive AC Bedroom with Split AC &amp; Work Desk">
-          <img src="assets/images/ac-room.jpg"
-            alt="Executive AC Bedroom with Split AC" loading="lazy" decoding="async">
-          <div class="gallery-hover-overlay">
-            <span class="zoom-icon">🔍</span>
-          </div>
-        </div>
-
-        <!-- Image 2: Non-AC Comfort Bedroom -->
-        <div class="gallery-item"
-          data-img="assets/images/non-ac-room.jpg"
-          data-caption="Non-AC Comfort Bedroom with Teak Wood Finish">
-          <img src="assets/images/non-ac-room.jpg"
-            alt="Non-AC Comfort Bedroom with Teak Wood Finish" loading="lazy" decoding="async">
-          <div class="gallery-hover-overlay">
-            <span class="zoom-icon">🔍</span>
-          </div>
-        </div>
-
-        <!-- Image 3: Comfort Bedroom with TV & Desk -->
-        <div class="gallery-item"
-          data-img="assets/images/comfort-room-tv.jpg"
-          data-caption="Comfort Bedroom with Wall-Mounted TV &amp; Desk">
-          <img src="assets/images/comfort-room-tv.jpg"
-            alt="Comfort Bedroom with Wall-Mounted TV &amp; Desk" loading="lazy" decoding="async">
-          <div class="gallery-hover-overlay">
-            <span class="zoom-icon">🔍</span>
-          </div>
-        </div>
-
-        <!-- Image 4: AC Bedroom Overview -->
-        <div class="gallery-item gallery-item-4"
-          data-img="assets/images/ac-room-view.jpg"
-          data-caption="Luxury Double Bedroom with Spacious Wardrobe">
-          <img src="assets/images/ac-room-view.jpg"
-            alt="Luxury Double Bedroom with Spacious Wardrobe" loading="lazy" decoding="async">
-          <div class="gallery-hover-overlay">
-            <span class="zoom-icon">🔍</span>
-          </div>
-        </div>
-
-        <!-- Image 5: Room Interior & Dressing Area -->
-        <div class="gallery-item gallery-hidden"
-          data-img="assets/images/room-dressing.jpg"
-          data-caption="Spacious Bedroom Interior with Dressing Mirror">
-          <img src="assets/images/room-dressing.jpg"
-            alt="Spacious Bedroom Interior with Dressing Mirror" loading="lazy" decoding="async">
-          <div class="gallery-hover-overlay">
-            <span class="zoom-icon">🔍</span>
-          </div>
-        </div>
-
-        <!-- Image 6: Ambient Cove Ceiling & Entertainment -->
-        <div class="gallery-item gallery-hidden"
-          data-img="assets/images/room-ceiling-tv.jpg"
-          data-caption="Ambient Cove Ceiling Lighting &amp; Flat Screen TV">
-          <img src="assets/images/room-ceiling-tv.jpg"
-            alt="Ambient Cove Ceiling Lighting &amp; Flat Screen TV" loading="lazy" decoding="async">
-          <div class="gallery-hover-overlay">
-            <span class="zoom-icon">🔍</span>
-          </div>
-        </div>
-
-        <!-- Image 7: Reception Desk -->
-        <div class="gallery-item gallery-hidden"
           data-img="assets/images/reception-desk.jpg"
           data-caption="Reception Desk with Teak Wood Panelling &amp; Brand Signage">
           <img src="assets/images/reception-desk.jpg"
@@ -889,8 +907,8 @@
           </div>
         </div>
 
-        <!-- Image 8: Hallway Corridor -->
-        <div class="gallery-item gallery-hidden"
+        <!-- Photo 2: Hallway Corridor -->
+        <div class="gallery-item"
           data-img="assets/images/hallway-corridor.jpg"
           data-caption="Bright Hallway Corridor with Designer Wooden Doors">
           <img src="assets/images/hallway-corridor.jpg"
@@ -900,8 +918,8 @@
           </div>
         </div>
 
-        <!-- Image 9: Guest Lounge Area -->
-        <div class="gallery-item gallery-hidden"
+        <!-- Photo 3: Guest Lounge Area -->
+        <div class="gallery-item"
           data-img="assets/images/lounge-area.jpg"
           data-caption="Guest Lounge with Plush Sofa &amp; Traditional Brass Nilavilakku">
           <img src="assets/images/lounge-area.jpg"
@@ -911,8 +929,8 @@
           </div>
         </div>
 
-        <!-- Image 10: Stairwell Entrance -->
-        <div class="gallery-item gallery-hidden"
+        <!-- Photo 4: Stairwell Entrance -->
+        <div class="gallery-item gallery-item-4"
           data-img="assets/images/stairwell-entrance.jpg"
           data-caption="Sun-Lit Stairwell with Panoramic Window View">
           <img src="assets/images/stairwell-entrance.jpg"
@@ -922,7 +940,7 @@
           </div>
         </div>
 
-        <!-- Image 11: Staircase & Lobby -->
+        <!-- Photo 5: Staircase & Lobby -->
         <div class="gallery-item gallery-hidden"
           data-img="assets/images/staircase-lobby.jpg"
           data-caption="Marble Staircase with Steel Railing &amp; Natural Light">
@@ -933,7 +951,7 @@
           </div>
         </div>
 
-        <!-- Image 12: Attached Modern Bathroom -->
+        <!-- Photo 6: Attached Modern Bathroom -->
         <div class="gallery-item gallery-hidden"
           data-img="assets/images/bathroom.jpg"
           data-caption="Sparkling Attached Bathroom with Rain Shower">
@@ -1205,7 +1223,7 @@
         <h4 class="modal-subtitle">Stay Information</h4>
         <ul class="detail-info-bullets">
           <li><strong>Stay Policy:</strong> 24-Hour Cycle (Check-out calculated 24 hours from check-in)</li>
-          <li><strong>Capacity:</strong> 2 Adults + 2 Children per room (extra bed or extra room available for 3–4 members)</li>
+          <li><strong>Capacity:</strong> 2 Adults + 2 Children (less than 12 years) per room (extra bed or extra room available for 3–4 members)</li>
           <li><strong>Rate:</strong> <span id="detailPrice">₹1,699</span> per night</li>
           <li><strong>Advance:</strong> ₹500 confirmation advance (Balance payable at check-in)</li>
         </ul>
@@ -1289,14 +1307,14 @@
           <div class="form-group">
             <label for="bookRoomCount">Rooms Required *</label>
             <select id="bookRoomCount" onchange="window.recalcModalStay()">
-              <option value="1" selected>1 Room (Accommodates 2 Adults + 2 Children)</option>
+              <option value="1" selected>1 Room (Accommodates 2 Adults + 2 Children &lt;12 yrs)</option>
               <option value="2">2 Rooms (Recommended for 3–4 Adults)</option>
             </select>
           </div>
           <div class="form-group">
             <label>Capacity &amp; Bedding Note</label>
             <div id="roomAllocationHint" style="font-size: 0.78rem; color: #D4AF37; background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 4px; padding: 10px 12px; line-height: 1.4;">
-              1 room fits 2 Adults + 2 Children. Extra bed or second room available for 3–4 adults.
+              1 room fits 2 Adults + 2 Children (less than 12 years). Extra bed or second room available for 3–4 adults.
             </div>
           </div>
         </div>
@@ -1312,11 +1330,11 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="bookChildren">Children (0-11 yrs)</label>
+            <label for="bookChildren">Children (less than 12 yrs)</label>
             <select id="bookChildren">
               <option value="0" selected>0 Children</option>
-              <option value="1">1 Child</option>
-              <option value="2">2 Children</option>
+              <option value="1">1 Child (&lt;12 yrs)</option>
+              <option value="2">2 Children (&lt;12 yrs)</option>
             </select>
           </div>
           <div class="form-group">
@@ -1454,7 +1472,7 @@
   </div>
 
   <!-- Main JavaScript Engine -->
-  <script src="js/script.js?v=15.0" defer></script>
+  <script src="js/script.js?v=17.0" defer></script>
 </body>
 
 </html>

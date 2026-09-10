@@ -477,10 +477,11 @@ textarea {
 }
 
 .hero-tagline {
-  font-family: var(--font-cursive);
-  font-size: 2.1rem;
+  font-family: var(--font-serif);
+  font-size: 1.85rem;
   font-weight: 400;
   font-style: italic;
+  letter-spacing: 2px;
   color: #FFFFFF;
   opacity: 0.95;
   margin-bottom: 36px;
@@ -983,17 +984,150 @@ section[id],
   width: 100%;
   height: 280px;
   overflow: hidden;
+  background-color: #121316;
+  user-select: none;
 }
 
+.room-slides-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.room-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s ease;
+  transform: scale(1.02);
+  z-index: 1;
+}
+
+.room-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+  z-index: 2;
+}
+
+.room-slide img,
 .room-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.6s ease;
+  cursor: pointer;
 }
 
-.room-card:hover .room-img {
-  transform: scale(1.05);
+.room-card:hover .room-slide.active img {
+  transform: scale(1.04);
+}
+
+.room-slider-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(15, 17, 21, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 6;
+  opacity: 0.82;
+  transition: all 0.22s ease;
+  padding: 0;
+}
+
+.room-slider-nav svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+}
+
+.room-slider-nav:hover {
+  opacity: 1;
+  background: var(--primary-gold);
+  color: #0C0D10;
+  border-color: var(--primary-gold);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.room-slider-nav.prev {
+  left: 10px;
+}
+
+.room-slider-nav.next {
+  right: 10px;
+}
+
+.room-slider-controls {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.room-slider-dots-mini {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+  background: rgba(12, 13, 16, 0.62);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.room-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-block;
+}
+
+.room-dot:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.room-dot.active {
+  background: var(--primary-gold);
+  width: 16px;
+  border-radius: 8px;
+}
+
+.room-photo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(12, 13, 16, 0.65);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  color: #FFFFFF;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  pointer-events: auto;
 }
 
 .room-tag {
@@ -1009,6 +1143,7 @@ section[id],
   letter-spacing: 1.5px;
   padding: 4px 10px;
   border-radius: 2px;
+  z-index: 5;
 }
 
 .room-status-badge {
@@ -1021,6 +1156,7 @@ section[id],
   border-radius: 20px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  z-index: 5;
 }
 
 .room-status-badge.available {
@@ -2340,6 +2476,37 @@ section[id],
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.modal-room-thumbs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -6px 0 18px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.modal-room-thumb {
+  width: 68px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.modal-room-thumb:hover {
+  opacity: 0.95;
+}
+
+.modal-room-thumb.active {
+  opacity: 1;
+  border-color: var(--primary-gold);
+  box-shadow: 0 0 0 2px rgba(197, 168, 128, 0.4);
 }
 
 .detail-desc {

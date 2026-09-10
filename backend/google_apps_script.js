@@ -211,6 +211,9 @@ function handleGetRooms() {
     var descIdx = headers.indexOf('description');
     var priceIdx = headers.indexOf('price_per_night');
     if (priceIdx === -1) priceIdx = headers.indexOf('price');
+    if (priceIdx === -1) priceIdx = headers.indexOf('rate');
+    if (priceIdx === -1) priceIdx = headers.indexOf('tariff');
+    if (priceIdx === -1) priceIdx = headers.indexOf('room_price');
     var capIdx = headers.indexOf('capacity');
     var amenitiesIdx = headers.indexOf('amenities');
     var imgIdx = headers.indexOf('image_url');
@@ -238,11 +241,15 @@ function handleGetRooms() {
           } catch (updateErr) {}
         }
 
+        var rawPrice = priceIdx >= 0 ? String(row[priceIdx]).replace(/[^0-9.]/g, '') : '0';
+        var parsedPrice = Number(rawPrice) || 0;
+
         rooms.push({
           room_id: rId,
           room_name: rName,
           description: descIdx >= 0 ? String(row[descIdx]) : '',
-          price_per_night: priceIdx >= 0 ? Number(row[priceIdx]) : 0,
+          price_per_night: parsedPrice,
+          price: parsedPrice,
           capacity: Math.max(capIdx >= 0 ? Number(row[capIdx]) : 0, 4),
           amenities: amenitiesIdx >= 0 ? String(row[amenitiesIdx]).split(',').map(function (s) { return s.trim(); }) : [],
           image_url: cleanImg,
@@ -1433,14 +1440,14 @@ function initialSetup() {
     roomSheet.appendRow([
       'R001', 'AC Room',
       'Spacious air-conditioned room (8 rooms in property) with plush bedding, private modern attached bathroom, TV in every room, and scenic view.',
-      1699, 4, 'Air Conditioning, TV in every room, Attached Bathroom, 24/7 Hot Water, High-Speed Wi-Fi, Daily housekeeping / cleaning on request',
+      1699, 4, 'Air Conditioning, Complimentary Breakfast, TV in every room, Attached Bathroom, 24/7 Hot Water, High-Speed Wi-Fi, Daily housekeeping / cleaning on request',
       'assets/images/ac-room.jpg',
       'Active', nowStr, nowStr
     ]);
     roomSheet.appendRow([
       'R002', 'Non AC Comfort Room',
       'Well-ventilated comfortable double bedroom (8 rooms in property) with attached bathroom, TV in every room, and work desk.',
-      1299, 4, 'Natural Ventilation, TV in every room, Attached Bathroom, 24/7 Hot Water, Wi-Fi, Daily housekeeping / cleaning on request',
+      1299, 4, 'Natural Ventilation, Complimentary Breakfast, TV in every room, Attached Bathroom, 24/7 Hot Water, Wi-Fi, Daily housekeeping / cleaning on request',
       'assets/images/non-ac-room.jpg',
       'Active', nowStr, nowStr
     ]);

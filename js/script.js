@@ -41,8 +41,14 @@ const ROOMS_DATA = {
     price: 1699,
     capacity: 4,
     img: 'assets/images/ac-room.jpg',
+    images: [
+      { src: 'assets/images/ac-room.jpg', caption: 'Executive AC Bedroom with Double Bed & Desk' },
+      { src: 'assets/images/ac-room-view.jpg', caption: 'Luxury Double Bedroom Overview & Wardrobe' },
+      { src: 'assets/images/room-ceiling-tv.jpg', caption: 'Ambient Cove Ceiling Lighting & TV' },
+      { src: 'assets/images/bathroom.jpg', caption: 'Sparkling Attached Bathroom with Shower' }
+    ],
     desc: 'Spacious climate-controlled room featuring plush queen bedding, modern attached bathroom with 24/7 hot water, and quiet garden ambience. Ideal for couples, families, and solo business executives.',
-    amenities: ['Air Conditioning', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
+    amenities: ['Air Conditioning', 'Complimentary Breakfast', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
   },
   'R002': {
     id: 'R002',
@@ -51,8 +57,14 @@ const ROOMS_DATA = {
     price: 1299,
     capacity: 4,
     img: 'assets/images/non-ac-room.jpg',
+    images: [
+      { src: 'assets/images/non-ac-room.jpg', caption: 'Non-AC Comfort Bedroom with Teak Wood Finish' },
+      { src: 'assets/images/comfort-room-tv.jpg', caption: 'Comfort Bedroom with Wall-Mounted TV & Desk' },
+      { src: 'assets/images/room-dressing.jpg', caption: 'Spacious Bedroom Interior with Dressing Mirror' },
+      { src: 'assets/images/bathroom.jpg', caption: 'Sparkling Attached Bathroom with Shower' }
+    ],
     desc: 'Well-ventilated, breezy double bedroom designed for budget-conscious travellers seeking clean, comfortable accommodation in central Thodupuzha.',
-    amenities: ['Natural Ventilation', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
+    amenities: ['Natural Ventilation', 'Complimentary Breakfast', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
   }
 };
 
@@ -209,31 +221,44 @@ async function fetchAndApplyRoomsAndSettings() {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.trim() === '') return;
 
   try {
-    // 1. Fetch Room Catalog from Google Sheets
-    const roomsRes = await fetch(`${APPS_SCRIPT_URL}?action=getRooms`, { method: 'GET', mode: 'cors' });
+    // 1. Fetch Room Catalog from Google Sheets (Cache-busted to ensure immediate updates)
+    const roomsRes = await fetch(`${APPS_SCRIPT_URL}?action=getRooms&_t=${Date.now()}`, { method: 'GET', mode: 'cors' });
     if (roomsRes.ok) {
       const data = await roomsRes.json();
       if (data && data.status === 'success' && Array.isArray(data.rooms) && data.rooms.length > 0) {
-        // Update ROOMS_DATA cache
+        // Update ROOMS_DATA cache with live prices from Google Sheets
         data.rooms.forEach(r => {
           const isNonAc = r.room_id === 'R002' || (r.room_name && r.room_name.toUpperCase().includes('NON'));
           const defaultRealImg = isNonAc ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
           const validImg = (r.image_url && !r.image_url.includes('unsplash')) ? r.image_url : defaultRealImg;
           r.image_url = validImg; // Always ensure real property image is used
 
+          // Live Price from Google Sheets
+          const fetchedPrice = Number(r.price_per_night || r.price || r.rate || r.tariff || r.room_price) || (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].price : 0);
+          r.price_per_night = fetchedPrice;
+
+          const defaultAmenities = isNonAc 
+            ? ['Natural Ventilation', 'Complimentary Breakfast', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
+            : ['Air Conditioning', 'Complimentary Breakfast', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water'];
+          let roomAmenities = (Array.isArray(r.amenities) && r.amenities.length > 0) ? r.amenities : defaultAmenities;
+          if (!roomAmenities.some(a => a.toLowerCase().includes('breakfast'))) {
+            roomAmenities.splice(1, 0, 'Complimentary Breakfast');
+          }
+
           ROOMS_DATA[r.room_id] = {
             id: r.room_id,
             name: r.room_name,
             tag: isNonAc ? 'NATURAL VENTILATION' : (r.room_name.toUpperCase().includes('AC') ? 'AIR CONDITIONED' : 'COMFORT ROOM'),
-            price: Number(r.price_per_night) || 0,
+            price: fetchedPrice,
             capacity: Math.max(Number(r.capacity) || 0, 4),
             img: validImg,
+            images: (ROOMS_DATA[r.room_id] && ROOMS_DATA[r.room_id].images) ? ROOMS_DATA[r.room_id].images : [{ src: validImg, caption: r.room_name }],
             desc: r.description || (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].desc : ''),
-            amenities: (r.amenities && r.amenities.length > 0) ? r.amenities : (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].amenities : ['Wi-Fi', 'Attached Bathroom', '24/7 Hot Water'])
+            amenities: roomAmenities
           };
         });
 
-        // Re-render rooms grid to reflect changes/new rooms/updated prices
+        // Re-render rooms grid to reflect changes/new rooms/updated prices from Google Sheets
         renderRoomsGrid(data.rooms);
         window.checkAvailabilityAction(false);
       }
@@ -244,7 +269,7 @@ async function fetchAndApplyRoomsAndSettings() {
 
   try {
     // 2. Fetch Property Settings from Google Sheets
-    const settingsRes = await fetch(`${APPS_SCRIPT_URL}?action=getSettings`, { method: 'GET', mode: 'cors' });
+    const settingsRes = await fetch(`${APPS_SCRIPT_URL}?action=getSettings&_t=${Date.now()}`, { method: 'GET', mode: 'cors' });
     if (settingsRes.ok) {
       const sData = await settingsRes.json();
       if (sData && sData.status === 'success' && sData.settings) {
@@ -266,23 +291,25 @@ function renderRoomsGrid(rooms) {
   try {
     rooms.forEach(room => {
       let card = grid.querySelector(`.room-card[data-room-id="${room.room_id}"]`);
+      const roomPrice = Number(room.price_per_night || room.price || room.rate || room.tariff) || (ROOMS_DATA[room.room_id] ? ROOMS_DATA[room.room_id].price : 0);
+
       if (card) {
         // Safe In-Place Update: NEVER wipe existing DOM cards
         card.setAttribute('data-capacity', String(room.capacity || 4));
-        if (room.price_per_night) {
-          card.setAttribute('data-price', String(room.price_per_night));
+        if (roomPrice > 0) {
+          card.setAttribute('data-price', String(roomPrice));
           const priceEl = card.querySelector('.price-value');
-          if (priceEl) priceEl.textContent = `₹${Number(room.price_per_night).toLocaleString('en-IN')}`;
+          if (priceEl) priceEl.textContent = `₹${roomPrice.toLocaleString('en-IN')}`;
           const estEl = card.querySelector('.est-amount');
-          if (estEl) estEl.textContent = `₹${Number(room.price_per_night).toLocaleString('en-IN')}`;
+          if (estEl) estEl.textContent = `₹${roomPrice.toLocaleString('en-IN')}`;
         }
         const capChip = card.querySelector('.room-capacity-chip');
         if (capChip) {
-          capChip.textContent = '2 Adults + 2 Children';
+          capChip.textContent = '2 Adults + 2 Children (<12 yrs)';
         }
         const bookBtn = card.querySelector('.book-room-btn');
         if (bookBtn) {
-          if (room.price_per_night) bookBtn.setAttribute('data-room-price', String(room.price_per_night));
+          if (roomPrice > 0) bookBtn.setAttribute('data-room-price', String(roomPrice));
           bookBtn.setAttribute('data-capacity', String(room.capacity || 4));
         }
       } else {
@@ -291,7 +318,7 @@ function renderRoomsGrid(rooms) {
         newCard.className = 'room-card';
         newCard.setAttribute('data-room-id', room.room_id);
         newCard.setAttribute('data-capacity', String(room.capacity || 4));
-        newCard.setAttribute('data-price', String(room.price_per_night));
+        newCard.setAttribute('data-price', String(roomPrice));
 
         const isNonAc = room.room_id === 'R002' || (room.room_name && room.room_name.toUpperCase().includes('NON'));
         const defaultRealImg = isNonAc ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
@@ -317,7 +344,7 @@ function renderRoomsGrid(rooms) {
           <div class="room-details">
             <div class="room-header-meta">
               <h3 class="room-type">${escapeHtml(room.room_name.toUpperCase())}</h3>
-              <span class="room-capacity-chip">2 Adults + 2 Children</span>
+              <span class="room-capacity-chip">2 Adults + 2 Children (&lt;12 yrs)</span>
             </div>
             <p class="room-short-desc">${escapeHtml(room.description || '')}</p>
             <ul class="room-features-list">
@@ -327,18 +354,18 @@ function renderRoomsGrid(rooms) {
             <div class="room-pricing-row">
               <div class="room-pricing">
                 <span class="from-text">RATE </span>
-                <span class="price-value" id="price-${escapeHtml(room.room_id)}">₹${Number(room.price_per_night).toLocaleString('en-IN')}</span>
+                <span class="price-value" id="price-${escapeHtml(room.room_id)}">₹${roomPrice.toLocaleString('en-IN')}</span>
                 <span class="period"> / NIGHT</span>
               </div>
               <div class="total-estimate" id="estimate-${escapeHtml(room.room_id)}" style="display:none;">
                 <span class="est-label">Total for stay:</span>
-                <span class="est-amount">₹${Number(room.price_per_night).toLocaleString('en-IN')}</span>
+                <span class="est-amount">₹${roomPrice.toLocaleString('en-IN')}</span>
               </div>
             </div>
 
             <div class="room-card-actions">
               <button class="btn btn-outline-room view-details-btn" data-room-id="${escapeHtml(room.room_id)}">VIEW DETAILS</button>
-              <button class="btn btn-dark-full book-room-btn" data-room-id="${escapeHtml(room.room_id)}" data-room-name="${escapeHtml(room.room_name)}" data-room-price="${escapeHtml(String(room.price_per_night))}" data-capacity="4">SELECT & BOOK</button>
+              <button class="btn btn-dark-full book-room-btn" data-room-id="${escapeHtml(room.room_id)}" data-room-name="${escapeHtml(room.room_name)}" data-room-price="${escapeHtml(String(roomPrice))}" data-capacity="4">SELECT & BOOK</button>
             </div>
           </div>
         `;
@@ -1060,8 +1087,132 @@ function initRoomCardsEvents() {
     });
   });
 
+  // Initialize Room Card Multi-Photo Sliders
+  initRoomImageSliders();
+
   // Initialize Mobile Rooms Horizontal Swipe & Pagination Dots
   initRoomsMobileSlider();
+}
+
+/**
+ * Interactive Room Card Multi-Photo Slider Engine
+ */
+function initRoomImageSliders() {
+  const roomCards = document.querySelectorAll('.room-card');
+  roomCards.forEach(card => {
+    const wrap = card.querySelector('.room-img-wrap');
+    if (!wrap) return;
+
+    // Avoid double-binding
+    if (wrap.dataset.sliderBound === 'true') return;
+    wrap.dataset.sliderBound = 'true';
+
+    const slides = wrap.querySelectorAll('.room-slide');
+    const prevBtn = wrap.querySelector('.room-slider-nav.prev');
+    const nextBtn = wrap.querySelector('.room-slider-nav.next');
+    const dots = wrap.querySelectorAll('.room-dot');
+    const counter = wrap.querySelector('.room-photo-counter');
+
+    if (!slides.length) return;
+
+    let currentIndex = 0;
+
+    function goToSlide(newIdx) {
+      if (newIdx < 0) newIdx = slides.length - 1;
+      if (newIdx >= slides.length) newIdx = 0;
+      currentIndex = newIdx;
+
+      slides.forEach((s, idx) => {
+        if (idx === currentIndex) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+
+      dots.forEach((d, idx) => {
+        if (idx === currentIndex) {
+          d.classList.add('active');
+        } else {
+          d.classList.remove('active');
+        }
+      });
+
+      if (counter) {
+        counter.textContent = `${currentIndex + 1} / ${slides.length}`;
+      }
+      wrap.setAttribute('data-current-slide', String(currentIndex));
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        goToSlide(currentIndex - 1);
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        goToSlide(currentIndex + 1);
+      });
+    }
+
+    dots.forEach((dot, idx) => {
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        goToSlide(idx);
+      });
+    });
+
+    // Clicking slide image opens full-screen lightbox preview
+    slides.forEach(slide => {
+      const img = slide.querySelector('img');
+      if (img) {
+        img.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const lightboxModal = document.getElementById('lightboxModal');
+          const lightboxImg = document.getElementById('lightboxImg');
+          const lightboxCaption = document.getElementById('lightboxCaption');
+          if (lightboxModal && lightboxImg) {
+            lightboxImg.src = img.src;
+            if (lightboxCaption) {
+              lightboxCaption.textContent = slide.getAttribute('data-caption') || img.alt || '';
+            }
+            lightboxModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+          }
+        });
+      }
+    });
+
+    // Mobile touch swipe handling on the card's image area
+    let touchStartX = 0;
+    let touchStartY = 0;
+    wrap.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches[0]) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+
+    wrap.addEventListener('touchend', (e) => {
+      if (e.changedTouches && e.changedTouches[0]) {
+        const deltaX = e.changedTouches[0].clientX - touchStartX;
+        const deltaY = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY)) {
+          if (deltaX < 0) {
+            goToSlide(currentIndex + 1);
+          } else {
+            goToSlide(currentIndex - 1);
+          }
+        }
+      }
+    }, { passive: true });
+  });
 }
 
 /**
@@ -1136,8 +1287,37 @@ function openRoomDetailsModal(roomId) {
   if (tagEl) tagEl.textContent = room.tag;
   if (imgEl) imgEl.src = room.img;
   if (descEl) descEl.textContent = room.desc;
-  if (capEl) capEl.textContent = room.capacity;
+  if (capEl) capEl.textContent = '2 Adults + 2 Children (<12 yrs)';
   if (priceEl) priceEl.textContent = `₹${room.price.toLocaleString('en-IN')}`;
+
+  // Room photo gallery thumbnails inside the modal
+  let thumbsContainer = modal.querySelector('.modal-room-thumbs');
+  if (!thumbsContainer && imgEl && imgEl.parentElement) {
+    thumbsContainer = document.createElement('div');
+    thumbsContainer.className = 'modal-room-thumbs';
+    imgEl.parentElement.after(thumbsContainer);
+  }
+
+  if (thumbsContainer) {
+    thumbsContainer.innerHTML = '';
+    const images = Array.isArray(room.images) && room.images.length > 0
+      ? room.images
+      : [{ src: room.img, caption: room.name }];
+
+    images.forEach((photoObj, idx) => {
+      const src = typeof photoObj === 'string' ? photoObj : photoObj.src;
+      const thumb = document.createElement('img');
+      thumb.src = src;
+      thumb.alt = `${room.name} Photo ${idx + 1}`;
+      thumb.className = `modal-room-thumb ${idx === 0 ? 'active' : ''}`;
+      thumb.addEventListener('click', () => {
+        if (imgEl) imgEl.src = src;
+        thumbsContainer.querySelectorAll('.modal-room-thumb').forEach(t => t.classList.remove('active'));
+        thumb.classList.add('active');
+      });
+      thumbsContainer.appendChild(thumb);
+    });
+  }
 
   if (amenitiesList) {
     amenitiesList.innerHTML = '';
