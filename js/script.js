@@ -19,6 +19,19 @@ const PROPERTY_EMAIL = 'nandhanamelite@gmail.com';
 const PROPERTY_INSTAGRAM = 'https://www.instagram.com/nandhanamelite?igsi=MWJ0emhiYmQyNnZ4OQ==';
 const PROPERTY_FACEBOOK = 'https://www.facebook.com/share/1R2bhGNVuv/?mibextid=wwXIfr';
 
+/**
+ * HTML Sanitizer Helper
+ */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Room Catalogue Data
 const ROOMS_DATA = {
   'R001': {
@@ -26,9 +39,9 @@ const ROOMS_DATA = {
     name: 'AC Room',
     tag: 'AIR CONDITIONED',
     price: 1699,
-    capacity: 2,
+    capacity: 4,
     img: 'assets/images/ac-room.jpg',
-    desc: 'Spacious climate-controlled room featuring plush queen bedding, modern attached bathroom with 24/7 hot water, and quiet garden ambience. Ideal for couples, solo business executives, and small families.',
+    desc: 'Spacious climate-controlled room featuring plush queen bedding, modern attached bathroom with 24/7 hot water, and quiet garden ambience. Ideal for couples, families, and solo business executives.',
     amenities: ['Air Conditioning', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
   },
   'R002': {
@@ -36,7 +49,7 @@ const ROOMS_DATA = {
     name: 'Non AC Comfort Room',
     tag: 'NATURAL VENTILATION',
     price: 1299,
-    capacity: 2,
+    capacity: 4,
     img: 'assets/images/non-ac-room.jpg',
     desc: 'Well-ventilated, breezy double bedroom designed for budget-conscious travellers seeking clean, comfortable accommodation in central Thodupuzha.',
     amenities: ['Natural Ventilation', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
@@ -213,7 +226,7 @@ async function fetchAndApplyRoomsAndSettings() {
             name: r.room_name,
             tag: isNonAc ? 'NATURAL VENTILATION' : (r.room_name.toUpperCase().includes('AC') ? 'AIR CONDITIONED' : 'COMFORT ROOM'),
             price: Number(r.price_per_night) || 0,
-            capacity: Number(r.capacity) || 2,
+            capacity: Math.max(Number(r.capacity) || 0, 4),
             img: validImg,
             desc: r.description || (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].desc : ''),
             amenities: (r.amenities && r.amenities.length > 0) ? r.amenities : (ROOMS_DATA[r.room_id] ? ROOMS_DATA[r.room_id].amenities : ['Wi-Fi', 'Attached Bathroom', '24/7 Hot Water'])
@@ -255,12 +268,13 @@ function renderRoomsGrid(rooms) {
     const card = document.createElement('div');
     card.className = 'room-card';
     card.setAttribute('data-room-id', room.room_id);
-    card.setAttribute('data-capacity', String(room.capacity));
+    card.setAttribute('data-capacity', String(room.capacity || 4));
     card.setAttribute('data-price', String(room.price_per_night));
 
     const isNonAc = room.room_id === 'R002' || (room.room_name && room.room_name.toUpperCase().includes('NON'));
     const defaultRealImg = isNonAc ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
     const imgUrl = (room.image_url && !room.image_url.includes('unsplash')) ? room.image_url : defaultRealImg;
+    const tag = isNonAc ? 'NATURAL VENTILATION' : (room.room_name && room.room_name.toUpperCase().includes('AC') ? 'AIR CONDITIONED' : 'COMFORT ROOM');
     const amenitiesArr = Array.isArray(room.amenities) ? room.amenities : [];
 
     let amenitiesHtml = '';
@@ -281,7 +295,7 @@ function renderRoomsGrid(rooms) {
       <div class="room-details">
         <div class="room-header-meta">
           <h3 class="room-type">${escapeHtml(room.room_name.toUpperCase())}</h3>
-          <span class="room-capacity-chip">Max ${escapeHtml(String(room.capacity))} Guests</span>
+          <span class="room-capacity-chip">2 Adults + 2 Children</span>
         </div>
         <p class="room-short-desc">${escapeHtml(room.description || '')}</p>
         <ul class="room-features-list">
@@ -302,7 +316,7 @@ function renderRoomsGrid(rooms) {
 
         <div class="room-card-actions">
           <button class="btn btn-outline-room view-details-btn" data-room-id="${escapeHtml(room.room_id)}">VIEW DETAILS</button>
-          <button class="btn btn-dark-full book-room-btn" data-room-id="${escapeHtml(room.room_id)}" data-room-name="${escapeHtml(room.room_name)}" data-room-price="${escapeHtml(String(room.price_per_night))}" data-capacity="${escapeHtml(String(room.capacity))}">SELECT & BOOK</button>
+          <button class="btn btn-dark-full book-room-btn" data-room-id="${escapeHtml(room.room_id)}" data-room-name="${escapeHtml(room.room_name)}" data-room-price="${escapeHtml(String(room.price_per_night))}" data-capacity="4">SELECT & BOOK</button>
         </div>
       </div>
     `;
@@ -373,13 +387,15 @@ function applySettingsToDOM(settings) {
   }
 
   // Update property address
-  const address = settings.address;
-  if (address) {
-    const footerAddressVal = document.getElementById('footerAddressVal');
-    if (footerAddressVal) footerAddressVal.textContent = address;
-    const footerAddressLink = document.getElementById('footerAddressLink');
-    if (footerAddressLink) footerAddressLink.href = `https://maps.google.com/?q=${encodeURIComponent(address)}`;
+  const defaultAddr = 'Kaithakod Junction, Vengallor - Mangatukavala Bypass Road, Thodupuzha East PO, Pin: 685585';
+  let address = settings.address;
+  if (!address || address.includes('Annz Colors')) {
+    address = defaultAddr;
   }
+  const footerAddressVal = document.getElementById('footerAddressVal');
+  if (footerAddressVal) footerAddressVal.textContent = address;
+  const footerAddressLink = document.getElementById('footerAddressLink');
+  if (footerAddressLink) footerAddressLink.href = `https://maps.google.com/?q=${encodeURIComponent(address)}`;
 
   // Update helpline call CTA button
   const helplineBtn = document.querySelector('.btn-helpline-call');
@@ -737,7 +753,8 @@ window.checkAvailabilityAction = async function (shouldScroll = true) {
 
     // Attempt Google Apps Script live fetch if configured
     if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '') {
-      const apiUrl = `${APPS_SCRIPT_URL}?action=checkAvailability&check_in=${encodeURIComponent(checkin)}&check_out=${encodeURIComponent(checkout)}&guests=${guests}`;
+      const serverGuests = Math.min(guests, 2);
+      const apiUrl = `${APPS_SCRIPT_URL}?action=checkAvailability&check_in=${encodeURIComponent(checkin)}&check_out=${encodeURIComponent(checkout)}&guests=${serverGuests}`;
       const response = await fetch(apiUrl, { method: 'GET', mode: 'cors' });
 
       if (!response.ok) {
@@ -760,6 +777,14 @@ window.checkAvailabilityAction = async function (shouldScroll = true) {
     // Update Room Card UI
     let availableCount = 0;
     results.forEach(res => {
+      res.capacity = Math.max(Number(res.capacity) || 0, 4);
+      // If server returned unavailable ONLY due to room capacity when up to 4 guests are permitted
+      if (!res.is_available && res.unavailability_reason && res.unavailability_reason.toLowerCase().includes('capacity') && guests <= 4) {
+        if (!res.overlapping_dates || res.overlapping_dates.length === 0) {
+          res.is_available = true;
+          res.unavailability_reason = '';
+        }
+      }
       const roomCard = document.querySelector(`.room-card[data-room-id="${res.room_id}"]`);
       const badge = document.getElementById(`badge-${res.room_id}`);
       const bookBtn = roomCard ? roomCard.querySelector('.book-room-btn') : null;
@@ -819,7 +844,13 @@ window.checkAvailabilityAction = async function (shouldScroll = true) {
             bannerTitle.textContent = `${totalAvailableUnits} Rooms Available (${availableCount} Category Open)`;
           }
         }
-        if (bannerDesc) bannerDesc.textContent = `Stay for ${nights} ${nights === 1 ? 'Night' : 'Nights'} (${formatDisplayDate(checkin)} to ${formatDisplayDate(checkout)}) for ${guests} ${guests === 1 ? 'Guest' : 'Guests'}.`;
+        if (bannerDesc) {
+          if (guests >= 3) {
+            bannerDesc.textContent = `Stay for ${nights} ${nights === 1 ? 'Night' : 'Nights'} (${formatDisplayDate(checkin)} to ${formatDisplayDate(checkout)}) for ${guests} Guests. Accommodates 2 Adults + 2 Children per room (extra bed or second room available on request).`;
+          } else {
+            bannerDesc.textContent = `Stay for ${nights} ${nights === 1 ? 'Night' : 'Nights'} (${formatDisplayDate(checkin)} to ${formatDisplayDate(checkout)}) for ${guests} ${guests === 1 ? 'Guest' : 'Guests'}.`;
+          }
+        }
       } else {
         banner.className = 'availability-status-banner error';
         if (bannerIcon) bannerIcon.textContent = '✕';
@@ -884,7 +915,8 @@ function calculateLocalAvailability(checkinStr, checkoutStr, guests) {
   const maxInventory = 8; // 8 AC rooms and 8 Non-AC rooms
 
   return Object.values(ROOMS_DATA).map(room => {
-    const fitsCapacity = guests ? room.capacity >= guests : true;
+    const roomCap = Math.max(Number(room.capacity) || 0, 4);
+    const fitsCapacity = guests ? roomCap >= guests : true;
 
     // Check overlaps
     let overlappingCount = 0;
@@ -929,7 +961,7 @@ function calculateLocalAvailability(checkinStr, checkoutStr, guests) {
       const dateSpans = overlappingBookings.map(ob => `${ob.check_in} to ${ob.check_out}`).join(', ');
       reason = 'All ' + maxInventory + ' rooms booked for dates: ' + dateSpans;
     } else if (!fitsCapacity) {
-      reason = `Exceeds capacity (${room.capacity} max)`;
+      reason = `Exceeds capacity (${roomCap} max)`;
     }
 
     return {
@@ -938,7 +970,7 @@ function calculateLocalAvailability(checkinStr, checkoutStr, guests) {
       price_per_night: room.price,
       total_nights: nights,
       total_estimated_price: room.price * nights,
-      capacity: room.capacity,
+      capacity: roomCap,
       total_inventory: maxInventory,
       remaining_units: remainingUnits,
       is_available: isAvailable,
@@ -1185,12 +1217,24 @@ window.recalcModalStay = async function () {
     }
   }
 
+  const roomCountSelect = document.getElementById('bookRoomCount');
+  const roomCount = roomCountSelect ? parseInt(roomCountSelect.value, 10) || 1 : 1;
   const nights = calculateNights(inInput.value, outInput.value);
-  const totalPrice = room.price * nights;
+  const totalPrice = room.price * nights * roomCount;
 
-  if (rateEl) rateEl.textContent = `₹${room.price.toLocaleString('en-IN')}`;
+  const sumRoomsEl = document.getElementById('sumRooms');
+  if (sumRoomsEl) sumRoomsEl.textContent = `${roomCount} ${roomCount === 1 ? 'Room' : 'Rooms'}`;
   if (durationEl) durationEl.textContent = `${nights} ${nights === 1 ? 'Night' : 'Nights'} (24h Stay)`;
   if (totalEl) totalEl.textContent = `₹${totalPrice.toLocaleString('en-IN')}`;
+
+  const hintEl = document.getElementById('roomAllocationHint');
+  if (hintEl) {
+    if (roomCount > 1) {
+      hintEl.innerHTML = `<strong>${roomCount} Rooms Selected:</strong> Ideal for 3–4 adult guests with maximum space and privacy.`;
+    } else {
+      hintEl.innerHTML = `<strong>1 Room Selected:</strong> Fits 2 Adults + 2 Children. For 3–4 adults, an extra bed can be requested or select <strong>2 Rooms</strong> above.`;
+    }
+  }
 
   // Check live availability for this room on these selected future dates
   let isAvailable = true;
@@ -1303,8 +1347,11 @@ window.handleBookingSubmit = async function () {
     return;
   }
 
-  if (room && totalGuests > room.capacity) {
-    showErrorMessage(`Total guests (${totalGuests}) exceeds the maximum capacity of ${room.name} (${room.capacity} guests max).`, 'Capacity Exceeded');
+  const roomCountSelect = document.getElementById('bookRoomCount');
+  const roomCount = roomCountSelect ? parseInt(roomCountSelect.value, 10) || 1 : 1;
+  const maxRoomCapacity = Math.max(Number(room ? room.capacity : 0) || 0, 4) * roomCount;
+  if (room && totalGuests > maxRoomCapacity) {
+    showErrorMessage(`Total guests (${totalGuests}) exceeds the capacity for ${roomCount} room(s).`, 'Capacity Exceeded');
     return;
   }
 
@@ -1330,6 +1377,10 @@ window.handleBookingSubmit = async function () {
 
     if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '') {
       // Live Google Apps Script POST request
+      const roomCountSelect = document.getElementById('bookRoomCount');
+      const roomCount = roomCountSelect ? parseInt(roomCountSelect.value, 10) || 1 : 1;
+      const bookingNotes = (roomCount > 1 ? `[Rooms: ${roomCount}] ` : '') + notes;
+
       const payload = {
         action: 'createBooking',
         room_id: roomId,
@@ -1341,7 +1392,8 @@ window.handleBookingSubmit = async function () {
         adults: adults,
         children: children,
         total_guests: totalGuests,
-        notes: notes,
+        rooms_count: roomCount,
+        notes: bookingNotes,
         hp_check: '' // Honeypot verification
       };
 
