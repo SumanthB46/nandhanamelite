@@ -1196,7 +1196,7 @@ section[id],
 
 .amenities-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
 
@@ -2807,6 +2807,10 @@ section[id],
     .amenities-grid {
       grid-template-columns: repeat(2, 1fr);
       gap: 14px;
+    }
+
+    .amenities-grid .amenity-item:last-child:nth-child(odd) {
+      grid-column: span 2;
     }
 
     .policies-grid {
