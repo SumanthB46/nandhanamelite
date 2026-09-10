@@ -477,11 +477,13 @@ textarea {
 }
 
 .hero-tagline {
-  font-family: var(--font-serif);
+  font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: 22px;
   font-weight: 400;
   font-style: italic;
-  letter-spacing: 2px;
+  text-transform: none;
+  font-variant: normal;
+  letter-spacing: 0.5px;
   color: #FFFFFF;
   opacity: 0.95;
   margin-bottom: 36px;
