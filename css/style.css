@@ -478,7 +478,7 @@ textarea {
 
 .hero-tagline {
   font-family: var(--font-serif);
-  font-size: 1.85rem;
+  font-size: 22px;
   font-weight: 400;
   font-style: italic;
   letter-spacing: 2px;
@@ -2927,7 +2927,7 @@ section[id],
     }
 
     .hero-tagline {
-      font-size: 1.5rem;
+      font-size: 18px;
       font-weight: 400;
     }
 
