@@ -740,8 +740,7 @@ function onOpen() {
   try {
     var ui = SpreadsheetApp.getUi();
     ui.createMenu('🏨 Nandhanam Elite')
-      .addItem('🔍 Check & Mark Old Bookings', 'markOldAndDeletedBookings')
-      .addItem('🧹 Clean Expired Pending Bookings', 'autoExpirePendingBookings')
+      .addItem('🧹 Clean Expired Pending Holds', 'autoExpirePendingBookings')
       .addSeparator()
       .addItem('⚙️ Sync Settings Sheet', 'syncSettingsSheet')
       .addItem('🖼️ Sync Room Images', 'syncRoomImagesInSheet')
@@ -752,62 +751,15 @@ function onOpen() {
 }
 
 /**
- * Check and Mark Old/Deleted Bookings in the Bookings Sheet
- * Automatically reviews all rows:
- * - Marks old bookings whose checkout date has passed as 'Completed' (if confirmed) or 'Expired' (if pending).
- * - Recognizes 'Deleted' rows and ensures they are safely excluded.
- */
-function markOldAndDeletedBookings() {
-  var ss = getTargetSpreadsheet();
-  var sheet = ss.getSheetByName(SHEET_BOOKINGS);
-  if (!sheet || sheet.getLastRow() <= 1) return;
-
-  var rows = sheet.getDataRange().getValues();
-  var headers = rows[0].map(function (h) { return String(h).trim().toLowerCase(); });
-
-  var idIdx = headers.indexOf('booking_id');
-  var outIdx = headers.indexOf('check_out');
-  var statusIdx = headers.indexOf('status');
-  var updatedIdx = headers.indexOf('updated_at');
-
-  var todayStr = getFormattedDate(new Date());
-  var today = parseDateString(todayStr);
-  var updatedCount = 0;
-
-  for (var i = 1; i < rows.length; i++) {
-    var row = rows[i];
-    if (!row[outIdx]) continue;
-
-    var status = statusIdx >= 0 ? String(row[statusIdx]).trim().toLowerCase() : '';
-    if (status === 'deleted' || status === 'cancelled') continue;
-
-    var bOut = parseDateString(row[outIdx]);
-    if (bOut && today && bOut <= today) {
-      // Old booking whose checkout date is in the past
-      var newStatus = (status === 'pending') ? 'Expired' : 'Completed';
-      if (status !== newStatus.toLowerCase()) {
-        sheet.getRange(i + 1, statusIdx + 1).setValue(newStatus);
-        if (updatedIdx >= 0) {
-          sheet.getRange(i + 1, updatedIdx + 1).setValue(getFormattedTimestamp());
-        }
-        updatedCount++;
-      }
-    }
-  }
-
-  Logger.log('Old booking check complete. Updated: ' + updatedCount);
-  try {
-    ss.toast('✅ Checked ' + (rows.length - 1) + ' bookings. ' + updatedCount + ' old booking(s) updated.', 'Booking Check Complete', 5);
-  } catch (e) {}
-}
-
-/**
- * Helper: Read Active Bookings from Sheet
- * Explicitly filters out:
- * - Deleted bookings (status = 'deleted' or 'cancelled' or marked in 'deleted' column)
- * - Old past bookings (check_out <= today)
- * - Expired pending bookings (> PENDING_EXPIRY_MINUTES)
- * - Blank/empty rows
+ * Helper: Read Active Bookings from Sheet (READ-ONLY QUERY)
+ * IMPORTANT: Old bookings and historical rows are NEVER deleted from the sheet.
+ * They remain permanently in the Excel sheet for your records.
+ * 
+ * This helper strictly reads rows to calculate live availability:
+ * - If a booking is marked 'Deleted' or 'Cancelled', it ignores it so it won't block rooms.
+ * - If a booking is an old booking from the past (check_out <= today), it stays in the sheet,
+ *   but is excluded from future room blocks.
+ * - No row is ever deleted or altered.
  */
 function getActiveBookingsFromSheet(sheet) {
   var activeBookings = [];
