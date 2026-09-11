@@ -49,7 +49,7 @@
   <link rel="apple-touch-icon" href="assets/images/Logo.png">
 
   <!-- ================= CRITICAL LCP ASSET PRELOAD ================= -->
-  <link rel="preload" href="css/style.css?v=14.0" as="style">
+  <link rel="preload" href="css/style.css?v=18.0" as="style">
 
   <!-- ================= OPTIMIZED GOOGLE FONTS (NON-BLOCKING) ================= -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,7 +66,7 @@
   </noscript>
 
   <!-- ================= MAIN STYLESHEET ================= -->
-  <link rel="stylesheet" href="css/style.css?v=14.0">
+  <link rel="stylesheet" href="css/style.css?v=18.0">
 
   <!-- ================= JSON-LD STRUCTURED DATA SCHEMA ================= -->
   <script type="application/ld+json">
@@ -425,8 +425,11 @@
 
       <div class="about-image-col">
         <div class="about-image-card">
-          <img src="assets/images/image.png"
-            alt="Nandhanam Elite Tourist Home Property View" class="about-img" loading="lazy" decoding="async">
+          <picture>
+            <source srcset="assets/images/image.webp" type="image/webp">
+            <img src="assets/images/image.png"
+              alt="Nandhanam Elite Tourist Home Property View" class="about-img" loading="lazy" decoding="async" width="800" height="533">
+          </picture>
           <div class="building-badge-overlay">
             <span class="badge-text">NANDHANAM ELITE</span>
           </div>
@@ -450,20 +453,32 @@
           <div class="room-img-wrap" data-current-slide="0">
             <div class="room-slides-track">
               <div class="room-slide active" data-index="0" data-caption="Executive AC Bedroom with Double Bed &amp; Desk">
-                <img src="assets/images/ac-room.jpg"
-                  alt="Executive AC Bedroom" class="room-img" loading="lazy" decoding="async">
+                <picture>
+                  <source srcset="assets/images/ac-room.webp" type="image/webp">
+                  <img src="assets/images/ac-room.jpg"
+                    alt="Executive AC Bedroom" class="room-img" loading="lazy" decoding="async">
+                </picture>
               </div>
               <div class="room-slide" data-index="1" data-caption="Luxury Double Bedroom Overview &amp; Wardrobe">
-                <img src="assets/images/ac-room-view.jpg"
-                  alt="AC Bedroom Overview" class="room-img" loading="lazy" decoding="async">
+                <picture>
+                  <source srcset="assets/images/ac-room-view.webp" type="image/webp">
+                  <img src="assets/images/ac-room-view.jpg"
+                    alt="AC Bedroom Overview" class="room-img" loading="lazy" decoding="async">
+                </picture>
               </div>
               <div class="room-slide" data-index="2" data-caption="Ambient Cove Ceiling Lighting &amp; TV">
-                <img src="assets/images/room-ceiling-tv.jpg"
-                  alt="Ceiling &amp; TV" class="room-img" loading="lazy" decoding="async">
+                <picture>
+                  <source srcset="assets/images/room-ceiling-tv.webp" type="image/webp">
+                  <img src="assets/images/room-ceiling-tv.jpg"
+                    alt="Ceiling &amp; TV" class="room-img" loading="lazy" decoding="async">
+                </picture>
               </div>
               <div class="room-slide" data-index="3" data-caption="Sparkling Attached Bathroom with Shower">
-                <img src="assets/images/bathroom.jpg"
-                  alt="Attached Bathroom" class="room-img" loading="lazy" decoding="async">
+                <picture>
+                  <source srcset="assets/images/bathroom.webp" type="image/webp">
+                  <img src="assets/images/bathroom.jpg"
+                    alt="Attached Bathroom" class="room-img" loading="lazy" decoding="async">
+                </picture>
               </div>
             </div>
             <div class="room-tag">AIR CONDITIONED</div>
@@ -546,20 +561,32 @@
           <div class="room-img-wrap" data-current-slide="0">
             <div class="room-slides-track">
               <div class="room-slide active" data-index="0" data-caption="Non-AC Comfort Bedroom with Teak Wood Finish">
-                <img src="assets/images/non-ac-room.jpg"
-                  alt="Non AC Comfortable Bedroom" class="room-img" loading="lazy" decoding="async">
+                <picture>
+                  <source srcset="assets/images/non-ac-room.webp" type="image/webp">
+                  <img src="assets/images/non-ac-room.jpg"
+                    alt="Non AC Comfortable Bedroom" class="room-img" loading="lazy" decoding="async">
+                </picture>
               </div>
               <div class="room-slide" data-index="1" data-caption="Comfort Bedroom with Wall-Mounted TV &amp; Desk">
-                <img src="assets/images/comfort-room-tv.jpg"
-                  alt="Comfort Room with TV &amp; Desk" class="room-img" loading="lazy" decoding="async">
+                <picture>
+                  <source srcset="assets/images/comfort-room-tv.webp" type="image/webp">
+                  <img src="assets/images/comfort-room-tv.jpg"
+                    alt="Comfort Room with TV &amp; Desk" class="room-img" loading="lazy" decoding="async">
+                </picture>
               </div>
               <div class="room-slide" data-index="2" data-caption="Spacious Bedroom Interior with Dressing Mirror">
-                <img src="assets/images/room-dressing.jpg"
-                  alt="Dressing Mirror &amp; Interior" class="room-img" loading="lazy" decoding="async">
+                <picture>
+                  <source srcset="assets/images/room-dressing.webp" type="image/webp">
+                  <img src="assets/images/room-dressing.jpg"
+                    alt="Dressing Mirror &amp; Interior" class="room-img" loading="lazy" decoding="async">
+                </picture>
               </div>
               <div class="room-slide" data-index="3" data-caption="Sparkling Attached Bathroom with Shower">
-                <img src="assets/images/bathroom.jpg"
-                  alt="Attached Bathroom" class="room-img" loading="lazy" decoding="async">
+                <picture>
+                  <source srcset="assets/images/bathroom.webp" type="image/webp">
+                  <img src="assets/images/bathroom.jpg"
+                    alt="Attached Bathroom" class="room-img" loading="lazy" decoding="async">
+                </picture>
               </div>
             </div>
             <div class="room-tag">NATURAL VENTILATION</div>
@@ -898,10 +925,13 @@
       <div class="gallery-grid">
         <!-- Photo 1: Reception Desk -->
         <div class="gallery-item"
-          data-img="assets/images/reception-desk.jpg"
+          data-img="assets/images/reception-desk.webp"
           data-caption="Reception Desk with Teak Wood Panelling &amp; Brand Signage">
-          <img src="assets/images/reception-desk.jpg"
-            alt="Nandhanam Elite Reception Desk with Teak Wood Panelling" loading="lazy" decoding="async">
+          <picture>
+            <source srcset="assets/images/reception-desk.webp" type="image/webp">
+            <img src="assets/images/reception-desk.jpg"
+              alt="Nandhanam Elite Reception Desk with Teak Wood Panelling" loading="lazy" decoding="async">
+          </picture>
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -909,10 +939,13 @@
 
         <!-- Photo 2: Hallway Corridor -->
         <div class="gallery-item"
-          data-img="assets/images/hallway-corridor.jpg"
+          data-img="assets/images/hallway-corridor.webp"
           data-caption="Bright Hallway Corridor with Designer Wooden Doors">
-          <img src="assets/images/hallway-corridor.jpg"
-            alt="Bright Hallway Corridor with Designer Wooden Doors" loading="lazy" decoding="async">
+          <picture>
+            <source srcset="assets/images/hallway-corridor.webp" type="image/webp">
+            <img src="assets/images/hallway-corridor.jpg"
+              alt="Bright Hallway Corridor with Designer Wooden Doors" loading="lazy" decoding="async">
+          </picture>
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -920,10 +953,13 @@
 
         <!-- Photo 3: Guest Lounge Area -->
         <div class="gallery-item"
-          data-img="assets/images/lounge-area.jpg"
+          data-img="assets/images/lounge-area.webp"
           data-caption="Guest Lounge with Plush Sofa &amp; Traditional Brass Nilavilakku">
-          <img src="assets/images/lounge-area.jpg"
-            alt="Guest Lounge with Plush Sofa and Traditional Brass Lamp" loading="lazy" decoding="async">
+          <picture>
+            <source srcset="assets/images/lounge-area.webp" type="image/webp">
+            <img src="assets/images/lounge-area.jpg"
+              alt="Guest Lounge with Plush Sofa and Traditional Brass Lamp" loading="lazy" decoding="async">
+          </picture>
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -931,10 +967,13 @@
 
         <!-- Photo 4: Stairwell Entrance -->
         <div class="gallery-item gallery-item-4"
-          data-img="assets/images/stairwell-entrance.jpg"
+          data-img="assets/images/stairwell-entrance.webp"
           data-caption="Sun-Lit Stairwell with Panoramic Window View">
-          <img src="assets/images/stairwell-entrance.jpg"
-            alt="Sun-Lit Stairwell with Panoramic Window View" loading="lazy" decoding="async">
+          <picture>
+            <source srcset="assets/images/stairwell-entrance.webp" type="image/webp">
+            <img src="assets/images/stairwell-entrance.jpg"
+              alt="Sun-Lit Stairwell with Panoramic Window View" loading="lazy" decoding="async">
+          </picture>
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -942,10 +981,13 @@
 
         <!-- Photo 5: Staircase & Lobby -->
         <div class="gallery-item gallery-hidden"
-          data-img="assets/images/staircase-lobby.jpg"
+          data-img="assets/images/staircase-lobby.webp"
           data-caption="Marble Staircase with Steel Railing &amp; Natural Light">
-          <img src="assets/images/staircase-lobby.jpg"
-            alt="Marble Staircase with Steel Railing and Natural Light" loading="lazy" decoding="async">
+          <picture>
+            <source srcset="assets/images/staircase-lobby.webp" type="image/webp">
+            <img src="assets/images/staircase-lobby.jpg"
+              alt="Marble Staircase with Steel Railing and Natural Light" loading="lazy" decoding="async">
+          </picture>
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -953,10 +995,13 @@
 
         <!-- Photo 6: Attached Modern Bathroom -->
         <div class="gallery-item gallery-hidden"
-          data-img="assets/images/bathroom.jpg"
+          data-img="assets/images/bathroom.webp"
           data-caption="Sparkling Attached Bathroom with Rain Shower">
-          <img src="assets/images/bathroom.jpg"
-            alt="Sparkling Attached Bathroom with Rain Shower" loading="lazy" decoding="async">
+          <picture>
+            <source srcset="assets/images/bathroom.webp" type="image/webp">
+            <img src="assets/images/bathroom.jpg"
+              alt="Sparkling Attached Bathroom with Rain Shower" loading="lazy" decoding="async">
+          </picture>
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
           </div>
@@ -1073,10 +1118,6 @@
       <!-- Col 1: Brand & Bio -->
       <div class="footer-col brand-col">
         <div class="footer-brand-header">
-          <picture>
-            <source srcset="assets/images/Logo.webp" type="image/webp">
-            <img src="assets/images/Logo.png" alt="Nandhanam Elite Crest" class="footer-emblem-img" width="180" height="103" loading="lazy" decoding="async">
-          </picture>
           <div class="footer-brand-text">
             <span class="footer-brand-title">NANDHANAM ELITE</span>
             <span class="footer-brand-sub">TOURIST HOME &bull; THODUPUZHA</span>
@@ -1212,6 +1253,15 @@
       <div class="modal-body">
         <div class="detail-gallery-img">
           <img src="" alt="Room detail photo" id="detailRoomImg">
+          <button type="button" class="modal-gallery-nav prev" id="modalDetailPrev" aria-label="Previous Room Photo" title="Previous Photo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <button type="button" class="modal-gallery-nav next" id="modalDetailNext" aria-label="Next Room Photo" title="Next Photo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+          <div class="detail-gallery-hint">
+            <span>🔍 Click image to enlarge &amp; slide</span>
+          </div>
         </div>
         <p class="detail-desc" id="detailRoomDesc"></p>
 
@@ -1464,15 +1514,35 @@
     </div>
   </div>
 
-  <!-- 4. GALLERY LIGHTBOX MODAL -->
-  <div class="lightbox-modal" id="lightboxModal">
-    <span class="lightbox-close" id="lightboxClose">&times;</span>
-    <img src="" alt="Enlarged Preview" id="lightboxImg">
-    <div class="lightbox-caption" id="lightboxCaption"></div>
+  <!-- 4. GALLERY & ROOM LIGHTBOX MODAL WITH SLIDER -->
+  <div class="lightbox-modal" id="lightboxModal" role="dialog" aria-modal="true" aria-label="Photo Preview">
+    <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Close Lightbox">&times;</button>
+    
+    <button type="button" class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Previous Photo" title="Previous Photo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+
+    <div class="lightbox-content-wrap">
+      <div class="lightbox-img-container">
+        <img src="" alt="Enlarged Room Preview" id="lightboxImg">
+      </div>
+      <div class="lightbox-footer-bar">
+        <div class="lightbox-caption" id="lightboxCaption"></div>
+        <div class="lightbox-counter" id="lightboxCounter">1 / 4</div>
+      </div>
+    </div>
+
+    <button type="button" class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Next Photo" title="Next Photo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </button>
   </div>
 
   <!-- Main JavaScript Engine -->
-  <script src="js/script.js?v=17.0" defer></script>
+  <script src="js/script.js?v=18.0" defer></script>
 </body>
 
 </html>

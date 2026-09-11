@@ -40,12 +40,12 @@ const ROOMS_DATA = {
     tag: 'AIR CONDITIONED',
     price: 1699,
     capacity: 4,
-    img: 'assets/images/ac-room.jpg',
+    img: 'assets/images/ac-room.webp',
     images: [
-      { src: 'assets/images/ac-room.jpg', caption: 'Executive AC Bedroom with Double Bed & Desk' },
-      { src: 'assets/images/ac-room-view.jpg', caption: 'Luxury Double Bedroom Overview & Wardrobe' },
-      { src: 'assets/images/room-ceiling-tv.jpg', caption: 'Ambient Cove Ceiling Lighting & TV' },
-      { src: 'assets/images/bathroom.jpg', caption: 'Sparkling Attached Bathroom with Shower' }
+      { src: 'assets/images/ac-room.webp', caption: 'Executive AC Bedroom with Double Bed & Desk' },
+      { src: 'assets/images/ac-room-view.webp', caption: 'Luxury Double Bedroom Overview & Wardrobe' },
+      { src: 'assets/images/room-ceiling-tv.webp', caption: 'Ambient Cove Ceiling Lighting & TV' },
+      { src: 'assets/images/bathroom.webp', caption: 'Sparkling Attached Bathroom with Shower' }
     ],
     desc: 'Spacious climate-controlled room featuring plush queen bedding, modern attached bathroom with 24/7 hot water, and quiet garden ambience. Ideal for couples, families, and solo business executives.',
     amenities: ['Air Conditioning', 'Complimentary Breakfast', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
@@ -56,12 +56,12 @@ const ROOMS_DATA = {
     tag: 'NATURAL VENTILATION',
     price: 1299,
     capacity: 4,
-    img: 'assets/images/non-ac-room.jpg',
+    img: 'assets/images/non-ac-room.webp',
     images: [
-      { src: 'assets/images/non-ac-room.jpg', caption: 'Non-AC Comfort Bedroom with Teak Wood Finish' },
-      { src: 'assets/images/comfort-room-tv.jpg', caption: 'Comfort Bedroom with Wall-Mounted TV & Desk' },
-      { src: 'assets/images/room-dressing.jpg', caption: 'Spacious Bedroom Interior with Dressing Mirror' },
-      { src: 'assets/images/bathroom.jpg', caption: 'Sparkling Attached Bathroom with Shower' }
+      { src: 'assets/images/non-ac-room.webp', caption: 'Non-AC Comfort Bedroom with Teak Wood Finish' },
+      { src: 'assets/images/comfort-room-tv.webp', caption: 'Comfort Bedroom with Wall-Mounted TV & Desk' },
+      { src: 'assets/images/room-dressing.webp', caption: 'Spacious Bedroom Interior with Dressing Mirror' },
+      { src: 'assets/images/bathroom.webp', caption: 'Sparkling Attached Bathroom with Shower' }
     ],
     desc: 'Well-ventilated, breezy double bedroom designed for budget-conscious travellers seeking clean, comfortable accommodation in central Thodupuzha.',
     amenities: ['Natural Ventilation', 'Complimentary Breakfast', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']
@@ -1168,23 +1168,24 @@ function initRoomImageSliders() {
       });
     });
 
-    // Clicking slide image opens full-screen lightbox preview
-    slides.forEach(slide => {
+    // Clicking slide image opens full-screen lightbox preview with that room's gallery
+    const cardEl = wrap.closest('.room-card');
+    const roomId = cardEl ? cardEl.getAttribute('data-room-id') : null;
+    const room = roomId && ROOMS_DATA[roomId] ? ROOMS_DATA[roomId] : null;
+
+    slides.forEach((slide, sIdx) => {
       const img = slide.querySelector('img');
       if (img) {
         img.addEventListener('click', (e) => {
           e.stopPropagation();
-          const lightboxModal = document.getElementById('lightboxModal');
-          const lightboxImg = document.getElementById('lightboxImg');
-          const lightboxCaption = document.getElementById('lightboxCaption');
-          if (lightboxModal && lightboxImg) {
-            lightboxImg.src = img.src;
-            if (lightboxCaption) {
-              lightboxCaption.textContent = slide.getAttribute('data-caption') || img.alt || '';
-            }
-            lightboxModal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-          }
+          const roomImages = (room && room.images) ? room.images : Array.from(slides).map(s => {
+            const im = s.querySelector('img');
+            return {
+              src: im ? im.src : '',
+              caption: s.getAttribute('data-caption') || (im ? im.alt : '')
+            };
+          });
+          openLightbox(roomImages, sIdx);
         });
       }
     });
@@ -1282,13 +1283,37 @@ function openRoomDetailsModal(roomId) {
   const priceEl = document.getElementById('detailPrice');
   const amenitiesList = document.getElementById('detailAmenitiesList');
   const bookBtn = document.getElementById('detailBookNowBtn');
+  const prevBtn = document.getElementById('modalDetailPrev');
+  const nextBtn = document.getElementById('modalDetailNext');
 
   if (nameEl) nameEl.textContent = room.name;
   if (tagEl) tagEl.textContent = room.tag;
-  if (imgEl) imgEl.src = room.img;
   if (descEl) descEl.textContent = room.desc;
   if (capEl) capEl.textContent = '2 Adults + 2 Children (<12 yrs)';
   if (priceEl) priceEl.textContent = `₹${room.price.toLocaleString('en-IN')}`;
+
+  const images = Array.isArray(room.images) && room.images.length > 0
+    ? room.images
+    : [{ src: room.img, caption: room.name }];
+
+  let currentDetailIndex = 0;
+
+  const updateDetailImage = (idx) => {
+    currentDetailIndex = (idx + images.length) % images.length;
+    const currentPhoto = images[currentDetailIndex];
+    const src = typeof currentPhoto === 'string' ? currentPhoto : currentPhoto.src;
+    const caption = typeof currentPhoto === 'object' ? currentPhoto.caption : room.name;
+    if (imgEl) {
+      imgEl.src = src;
+      imgEl.alt = caption;
+    }
+    if (thumbsContainer) {
+      thumbsContainer.querySelectorAll('.modal-room-thumb').forEach((t, i) => {
+        if (i === currentDetailIndex) t.classList.add('active');
+        else t.classList.remove('active');
+      });
+    }
+  };
 
   // Room photo gallery thumbnails inside the modal
   let thumbsContainer = modal.querySelector('.modal-room-thumbs');
@@ -1300,23 +1325,42 @@ function openRoomDetailsModal(roomId) {
 
   if (thumbsContainer) {
     thumbsContainer.innerHTML = '';
-    const images = Array.isArray(room.images) && room.images.length > 0
-      ? room.images
-      : [{ src: room.img, caption: room.name }];
-
     images.forEach((photoObj, idx) => {
       const src = typeof photoObj === 'string' ? photoObj : photoObj.src;
       const thumb = document.createElement('img');
       thumb.src = src;
       thumb.alt = `${room.name} Photo ${idx + 1}`;
       thumb.className = `modal-room-thumb ${idx === 0 ? 'active' : ''}`;
-      thumb.addEventListener('click', () => {
-        if (imgEl) imgEl.src = src;
-        thumbsContainer.querySelectorAll('.modal-room-thumb').forEach(t => t.classList.remove('active'));
-        thumb.classList.add('active');
+      thumb.addEventListener('click', (e) => {
+        e.stopPropagation();
+        updateDetailImage(idx);
       });
       thumbsContainer.appendChild(thumb);
     });
+  }
+
+  // Set initial photo
+  updateDetailImage(0);
+
+  // Prev / Next navigation inside the "View More" modal
+  if (prevBtn) {
+    prevBtn.onclick = (e) => {
+      e.stopPropagation();
+      updateDetailImage(currentDetailIndex - 1);
+    };
+  }
+  if (nextBtn) {
+    nextBtn.onclick = (e) => {
+      e.stopPropagation();
+      updateDetailImage(currentDetailIndex + 1);
+    };
+  }
+
+  // Clicking the modal image opens the full-screen Lightbox slider
+  if (imgEl) {
+    imgEl.onclick = () => {
+      openLightbox(images, currentDetailIndex);
+    };
   }
 
   if (amenitiesList) {
@@ -1821,72 +1865,176 @@ function closeAllModals() {
 }
 
 /* ==========================================================================
-   8. GALLERY LIGHTBOX
+   8. UNIVERSAL LIGHTBOX & SLIDER SYSTEM
    ========================================================================== */
-function initGalleryLightbox() {
-  const galleryItems = document.querySelectorAll('.gallery-item');
+let activeLightboxItems = [];
+let activeLightboxIndex = 0;
+
+function openLightbox(items, startIndex = 0) {
+  if (!items || !items.length) return;
   const lightboxModal = document.getElementById('lightboxModal');
+  if (!lightboxModal) return;
+
+  activeLightboxItems = items;
+  activeLightboxIndex = Math.max(0, Math.min(startIndex, items.length - 1));
+
+  showLightboxSlide(activeLightboxIndex, false);
+  lightboxModal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function showLightboxSlide(index, animate = true) {
+  if (!activeLightboxItems.length) return;
+  activeLightboxIndex = (index + activeLightboxItems.length) % activeLightboxItems.length;
+
   const lightboxImg = document.getElementById('lightboxImg');
   const lightboxCaption = document.getElementById('lightboxCaption');
+  const lightboxCounter = document.getElementById('lightboxCounter');
+  const prevBtn = document.getElementById('lightboxPrev');
+  const nextBtn = document.getElementById('lightboxNext');
+
+  const currentItem = activeLightboxItems[activeLightboxIndex];
+  const src = typeof currentItem === 'string' ? currentItem : currentItem.src;
+  const caption = (typeof currentItem === 'object' && currentItem.caption) ? currentItem.caption : '';
+
+  if (lightboxImg) {
+    if (animate) {
+      lightboxImg.classList.add('is-switching');
+      setTimeout(() => {
+        lightboxImg.src = src;
+        lightboxImg.alt = caption || 'Enlarged Preview';
+        lightboxImg.classList.remove('is-switching');
+      }, 100);
+    } else {
+      lightboxImg.src = src;
+      lightboxImg.alt = caption || 'Enlarged Preview';
+    }
+  }
+
+  if (lightboxCaption) {
+    lightboxCaption.textContent = caption;
+  }
+
+  if (lightboxCounter) {
+    lightboxCounter.textContent = `${activeLightboxIndex + 1} / ${activeLightboxItems.length}`;
+    lightboxCounter.style.display = activeLightboxItems.length > 1 ? 'inline-block' : 'none';
+  }
+
+  if (prevBtn && nextBtn) {
+    const showNav = activeLightboxItems.length > 1 ? 'flex' : 'none';
+    prevBtn.style.display = showNav;
+    nextBtn.style.display = showNav;
+  }
+}
+
+function lightboxNext() {
+  showLightboxSlide(activeLightboxIndex + 1, true);
+}
+
+function lightboxPrev() {
+  showLightboxSlide(activeLightboxIndex - 1, true);
+}
+
+function closeLightbox() {
+  const lightboxModal = document.getElementById('lightboxModal');
+  if (lightboxModal) {
+    lightboxModal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+}
+
+function initGalleryLightbox() {
+  const lightboxModal = document.getElementById('lightboxModal');
   const lightboxClose = document.getElementById('lightboxClose');
+  const lightboxPrev = document.getElementById('lightboxPrev');
+  const lightboxNext = document.getElementById('lightboxNext');
   const viewMorePhotosBtn = document.getElementById('viewMorePhotosBtn');
 
-  if (galleryItems.length && lightboxModal) {
-    galleryItems.forEach(item => {
-      item.addEventListener('click', () => {
-        const fullImg = item.getAttribute('data-img');
-        const caption = item.getAttribute('data-caption');
-        if (lightboxImg) lightboxImg.src = fullImg;
-        if (lightboxCaption) lightboxCaption.textContent = caption || '';
-        lightboxModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-      });
-    });
-
-    if (lightboxClose) {
-      lightboxClose.addEventListener('click', () => {
-        lightboxModal.classList.remove('active');
-        document.body.style.overflow = '';
-      });
-    }
+  if (lightboxModal) {
+    if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+    if (lightboxPrev) lightboxPrev.addEventListener('click', (e) => { e.stopPropagation(); lightboxPrev(); });
+    if (lightboxNext) lightboxNext.addEventListener('click', (e) => { e.stopPropagation(); lightboxNext(); });
 
     lightboxModal.addEventListener('click', (e) => {
-      if (e.target === lightboxModal) {
-        lightboxModal.classList.remove('active');
-        document.body.style.overflow = '';
+      // Close if clicking outside the image container
+      if (e.target === lightboxModal || e.target.classList.contains('lightbox-content-wrap') || e.target.classList.contains('lightbox-img-container')) {
+        closeLightbox();
       }
     });
 
-    if (viewMorePhotosBtn) {
-      const galleryGrid = document.querySelector('.gallery-grid');
-      viewMorePhotosBtn.addEventListener('click', () => {
-        const isExpanded = galleryGrid ? galleryGrid.classList.toggle('is-expanded') : false;
-        const extraItems = document.querySelectorAll('.gallery-grid .gallery-item:nth-child(n+4)');
+    // Keyboard navigation (Arrow keys + Esc)
+    document.addEventListener('keydown', (e) => {
+      if (!lightboxModal.classList.contains('active')) return;
+      if (e.key === 'ArrowRight') lightboxNext();
+      else if (e.key === 'ArrowLeft') lightboxPrev();
+      else if (e.key === 'Escape') closeLightbox();
+    });
 
-        extraItems.forEach(item => {
-          if (isExpanded) {
-            item.classList.remove('gallery-hidden');
-            item.classList.add('gallery-revealed');
-          } else {
-            item.classList.remove('gallery-revealed');
-            if (item.classList.contains('gallery-item-4')) {
-              // Handled by CSS media query (visible on mobile, hidden on desktop when collapsed)
-            } else {
-              item.classList.add('gallery-hidden');
-            }
-          }
-        });
+    // Mobile touch swipe handling on lightbox
+    let lbTouchStartX = 0;
+    let lbTouchStartY = 0;
+    lightboxModal.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches[0]) {
+        lbTouchStartX = e.touches[0].clientX;
+        lbTouchStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
 
-        viewMorePhotosBtn.textContent = isExpanded ? 'SHOW LESS' : 'VIEW MORE PHOTOS';
+    lightboxModal.addEventListener('touchend', (e) => {
+      if (e.changedTouches && e.changedTouches[0]) {
+        const deltaX = e.changedTouches[0].clientX - lbTouchStartX;
+        const deltaY = e.changedTouches[0].clientY - lbTouchStartY;
+        if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY)) {
+          if (deltaX < 0) lightboxNext();
+          else lightboxPrev();
+        }
+      }
+    }, { passive: true });
+  }
 
-        if (!isExpanded) {
-          const gallerySection = document.getElementById('gallery');
-          if (gallerySection) {
-            gallerySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Gallery items
+  const galleryItems = document.querySelectorAll('.gallery-item');
+  if (galleryItems.length) {
+    const galleryList = Array.from(galleryItems).map(item => ({
+      src: item.getAttribute('data-img') || (item.querySelector('img') ? item.querySelector('img').src : ''),
+      caption: item.getAttribute('data-caption') || (item.querySelector('img') ? item.querySelector('img').alt : '')
+    }));
+
+    galleryItems.forEach((item, idx) => {
+      item.addEventListener('click', () => {
+        openLightbox(galleryList, idx);
+      });
+    });
+  }
+
+  // View More Photos expandable toggle
+  if (viewMorePhotosBtn) {
+    const galleryGrid = document.querySelector('.gallery-grid');
+    viewMorePhotosBtn.addEventListener('click', () => {
+      const isExpanded = galleryGrid ? galleryGrid.classList.toggle('is-expanded') : false;
+      const extraItems = document.querySelectorAll('.gallery-grid .gallery-item:nth-child(n+4)');
+
+      extraItems.forEach(item => {
+        if (isExpanded) {
+          item.classList.remove('gallery-hidden');
+          item.classList.add('gallery-revealed');
+        } else {
+          item.classList.remove('gallery-revealed');
+          if (!item.classList.contains('gallery-item-4')) {
+            item.classList.add('gallery-hidden');
           }
         }
       });
-    }
+
+      viewMorePhotosBtn.textContent = isExpanded ? 'SHOW LESS' : 'VIEW MORE PHOTOS';
+
+      if (!isExpanded) {
+        const gallerySection = document.getElementById('gallery');
+        if (gallerySection) {
+          gallerySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
   }
 }
 
