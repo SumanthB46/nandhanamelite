@@ -49,7 +49,9 @@
   <link rel="apple-touch-icon" href="assets/images/Logo.png">
 
   <!-- ================= CRITICAL LCP ASSET PRELOAD ================= -->
-  <link rel="preload" href="css/style.css?v=20.0" as="style">
+  <link rel="preload" href="css/style.css?v=21.0" as="style">
+  <link rel="preload" href="assets/images/hero-bg.webp" as="image" type="image/webp" fetchpriority="high">
+  <link rel="preload" href="assets/images/ac-room.webp" as="image" type="image/webp" fetchpriority="high">
 
   <!-- ================= OPTIMIZED GOOGLE FONTS (NON-BLOCKING) ================= -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,7 +68,7 @@
   </noscript>
 
   <!-- ================= MAIN STYLESHEET ================= -->
-  <link rel="stylesheet" href="css/style.css?v=20.0">
+  <link rel="stylesheet" href="css/style.css?v=21.0">
 
   <!-- ================= JSON-LD STRUCTURED DATA SCHEMA ================= -->
   <script type="application/ld+json">
@@ -428,7 +430,7 @@
           <picture>
             <source srcset="assets/images/image.webp" type="image/webp">
             <img src="assets/images/image.png"
-              alt="Nandhanam Elite Tourist Home Property View" class="about-img" loading="lazy" decoding="async" width="800" height="533">
+              alt="Nandhanam Elite Tourist Home Property View" class="about-img" loading="lazy" decoding="async" width="800" height="800">
           </picture>
           <div class="building-badge-overlay">
             <span class="badge-text">NANDHANAM ELITE</span>
@@ -456,7 +458,7 @@
                 <picture>
                   <source srcset="assets/images/ac-room.webp" type="image/webp">
                   <img src="assets/images/ac-room.jpg"
-                    alt="Executive AC Bedroom" class="room-img" loading="lazy" decoding="async">
+                    alt="Executive AC Bedroom" class="room-img" fetchpriority="high" decoding="async">
                 </picture>
               </div>
               <div class="room-slide" data-index="1" data-caption="Luxury Double Bedroom Overview &amp; Wardrobe">
@@ -581,13 +583,6 @@
                     alt="Dressing Mirror &amp; Interior" class="room-img" loading="lazy" decoding="async">
                 </picture>
               </div>
-              <div class="room-slide" data-index="3" data-caption="Sparkling Attached Bathroom with Shower">
-                <picture>
-                  <source srcset="assets/images/bathroom.webp" type="image/webp">
-                  <img src="assets/images/bathroom.jpg"
-                    alt="Attached Bathroom" class="room-img" loading="lazy" decoding="async">
-                </picture>
-              </div>
             </div>
             <div class="room-tag">NATURAL VENTILATION</div>
             <div class="room-status-badge available" id="badge-R002">Available</div>
@@ -602,11 +597,10 @@
                 <span class="room-dot active" data-slide="0"></span>
                 <span class="room-dot" data-slide="1"></span>
                 <span class="room-dot" data-slide="2"></span>
-                <span class="room-dot" data-slide="3"></span>
               </div>
               <div class="room-photo-badge">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                <span class="room-photo-counter">1 / 4</span>
+                <span class="room-photo-counter">1 / 3</span>
               </div>
             </div>
           </div>
@@ -993,14 +987,14 @@
           </div>
         </div>
 
-        <!-- Photo 6: Attached Modern Bathroom -->
+        <!-- Photo 6: Property Exterior & Facade -->
         <div class="gallery-item gallery-hidden"
-          data-img="assets/images/bathroom.webp"
-          data-caption="Sparkling Attached Bathroom with Rain Shower">
+          data-img="assets/images/image.webp"
+          data-caption="Nandhanam Elite Tourist Home Property Facade &amp; Exterior">
           <picture>
-            <source srcset="assets/images/bathroom.webp" type="image/webp">
-            <img src="assets/images/bathroom.jpg"
-              alt="Sparkling Attached Bathroom with Rain Shower" loading="lazy" decoding="async">
+            <source srcset="assets/images/image.webp" type="image/webp">
+            <img src="assets/images/image.png"
+              alt="Nandhanam Elite Tourist Home Property Facade &amp; Exterior" loading="lazy" decoding="async">
           </picture>
           <div class="gallery-hover-overlay">
             <span class="zoom-icon">🔍</span>
@@ -1542,7 +1536,7 @@
   </div>
 
   <!-- Main JavaScript Engine -->
-  <script src="js/script.js?v=20.0" defer></script>
+  <script src="js/script.js?v=21.0" defer></script>
 </body>
 
 </html>

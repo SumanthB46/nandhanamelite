@@ -60,8 +60,7 @@ const ROOMS_DATA = {
     images: [
       { src: 'assets/images/non-ac-room.webp', caption: 'Non-AC Comfort Bedroom with Teak Wood Finish' },
       { src: 'assets/images/comfort-room-tv.webp', caption: 'Comfort Bedroom with Wall-Mounted TV & Desk' },
-      { src: 'assets/images/room-dressing.webp', caption: 'Spacious Bedroom Interior with Dressing Mirror' },
-      { src: 'assets/images/bathroom.webp', caption: 'Sparkling Attached Bathroom with Shower' }
+      { src: 'assets/images/room-dressing.webp', caption: 'Spacious Bedroom Interior with Dressing Mirror' }
     ],
     desc: 'Well-ventilated, breezy double bedroom designed for budget-conscious travellers seeking clean, comfortable accommodation in central Thodupuzha.',
     amenities: ['Natural Ventilation', 'Complimentary Breakfast', 'TV in every room', 'Attached Bathroom', '24/7 Hot Water']

@@ -415,7 +415,7 @@ textarea {
 .hero-backdrop {
   position: absolute;
   inset: 0;
-  background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=750&q=70');
+  background-image: url('../assets/images/hero-bg.webp');
   background-size: cover;
   background-position: center;
   opacity: 0.35;
@@ -424,7 +424,7 @@ textarea {
 
 @media (min-width: 769px) {
   .hero-backdrop {
-    background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1400&q=75');
+    background-image: url('../assets/images/hero-bg.webp');
   }
 }
 
