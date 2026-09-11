@@ -977,30 +977,43 @@ function calculateLocalAvailability(checkinStr, checkoutStr, guests) {
     const nowTime = Date.now();
     const expiryLimitMs = 5 * 60 * 1000; // 5-minute temporary hold
 
+    const today = parseDate(formatDate(new Date()));
+
     for (let i = 0; i < LOCAL_BOOKINGS_STORE.length; i++) {
       const b = LOCAL_BOOKINGS_STORE[i];
+      if (!b) continue;
+
+      // Ignore deleted, cancelled, or void bookings
+      const bStatus = String(b.status || '').trim().toLowerCase();
+      if (b.deleted || bStatus === 'deleted' || bStatus === 'cancelled' || bStatus === 'canceled' || bStatus === 'expired') {
+        continue;
+      }
+
       if (b.room_id === room.id) {
+        const bIn = parseDate(b.check_in);
+        const bOut = parseDate(b.check_out);
+        if (!bIn || !bOut) continue;
+
+        // Old past booking check: If checkout date has already passed, it does not block future inventory
+        if (today && bOut <= today) continue;
+
         let isPendingExpired = false;
-        if (b.status === 'Pending' && b.created_at) {
+        if (bStatus === 'pending' && b.created_at) {
           const createdTime = new Date(b.created_at).getTime();
           if (!isNaN(createdTime) && (nowTime - createdTime) > expiryLimitMs) {
             isPendingExpired = true;
           }
         }
 
-        const isConfirmedOrDone = (b.status === 'Confirmed' || b.status === 'Done' || b.status === 'Paid');
-        if ((b.status === 'Pending' && !isPendingExpired) || isConfirmedOrDone) {
-          const bIn = parseDate(b.check_in);
-          const bOut = parseDate(b.check_out);
-          if (bIn && bOut) {
-            if (reqIn < bOut && reqOut > bIn) {
-              overlappingCount++;
-              overlappingBookings.push({
-                check_in: b.check_in,
-                check_out: b.check_out,
-                status: b.status
-              });
-            }
+        const isConfirmedOrDone = (bStatus === 'confirmed' || bStatus === 'done' || bStatus === 'paid' || bStatus === 'active');
+        if ((bStatus === 'pending' && !isPendingExpired) || isConfirmedOrDone) {
+          if (reqIn < bOut && reqOut > bIn) {
+            overlappingCount++;
+            overlappingBookings.push({
+              check_in: b.check_in,
+              check_out: b.check_out,
+              status: b.status
+            });
           }
         }
       }
@@ -1945,15 +1958,24 @@ function closeLightbox() {
 
 function initGalleryLightbox() {
   const lightboxModal = document.getElementById('lightboxModal');
-  const lightboxClose = document.getElementById('lightboxClose');
-  const lightboxPrev = document.getElementById('lightboxPrev');
-  const lightboxNext = document.getElementById('lightboxNext');
+  const lbCloseBtn = document.getElementById('lightboxClose');
+  const lbPrevBtn = document.getElementById('lightboxPrev');
+  const lbNextBtn = document.getElementById('lightboxNext');
   const viewMorePhotosBtn = document.getElementById('viewMorePhotosBtn');
 
   if (lightboxModal) {
-    if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
-    if (lightboxPrev) lightboxPrev.addEventListener('click', (e) => { e.stopPropagation(); lightboxPrev(); });
-    if (lightboxNext) lightboxNext.addEventListener('click', (e) => { e.stopPropagation(); lightboxNext(); });
+    if (lbCloseBtn) lbCloseBtn.addEventListener('click', closeLightbox);
+    if (lbPrevBtn) lbPrevBtn.addEventListener('click', (e) => { e.stopPropagation(); lightboxPrev(); });
+    if (lbNextBtn) lbNextBtn.addEventListener('click', (e) => { e.stopPropagation(); lightboxNext(); });
+
+    // Clicking image in lightbox advances to next photo
+    const lightboxImg = document.getElementById('lightboxImg');
+    if (lightboxImg) {
+      lightboxImg.addEventListener('click', (e) => {
+        e.stopPropagation();
+        lightboxNext();
+      });
+    }
 
     lightboxModal.addEventListener('click', (e) => {
       // Close if clicking outside the image container
