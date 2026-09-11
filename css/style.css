@@ -954,19 +954,20 @@ section[id],
 
 .rooms-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(380px, 550px));
+  grid-template-columns: repeat(2, minmax(260px, 340px));
   justify-content: center;
   align-items: stretch;
-  gap: 40px;
-  max-width: 1160px;
+  gap: 24px;
+  max-width: 720px;
   margin: 0 auto;
   width: 100%;
 }
 
 @media (max-width: 960px) and (min-width: 769px) {
   .rooms-grid {
-    grid-template-columns: repeat(2, minmax(300px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(2, minmax(240px, 310px));
+    gap: 16px;
+    max-width: 650px;
   }
 }
 
@@ -1186,7 +1187,7 @@ section[id],
 }
 
 .room-details {
-  padding: 24px 24px;
+  padding: 15px 16px 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1197,62 +1198,66 @@ section[id],
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .room-type {
   font-family: var(--font-serif);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   color: var(--text-dark);
 }
 
 .room-capacity-chip {
   background-color: var(--bg-cream-alt);
   color: var(--text-dark-muted);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 600;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 3px;
   white-space: nowrap;
 }
 
 .room-short-desc {
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   color: var(--text-dark-muted);
-  line-height: 1.5;
-  margin-bottom: 16px;
+  line-height: 1.38;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .room-features-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px 14px;
-  margin-bottom: 18px;
+  gap: 5px 8px;
+  margin-bottom: 10px;
   flex: 1;
 }
 
 .room-features-list li {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.82rem;
+  gap: 6px;
+  font-size: 0.74rem;
   color: var(--text-dark-muted);
   margin-bottom: 0;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 .check-icon {
   color: var(--primary-gold-dark);
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   flex-shrink: 0;
 }
 
 .room-pricing-row {
   margin-top: auto;
-  padding: 12px 0;
+  padding: 8px 0 8px;
   border-top: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
@@ -1264,20 +1269,20 @@ section[id],
 }
 
 .from-text {
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 600;
-  letter-spacing: 1px;
+  letter-spacing: 0.6px;
   color: var(--text-dark-muted);
 }
 
 .price-value {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--primary-gold-dark);
 }
 
 .period {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   color: var(--text-dark-muted);
 }
@@ -1289,21 +1294,27 @@ section[id],
 }
 
 .est-label {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: var(--text-dark-muted);
 }
 
 .est-amount {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: var(--text-dark);
 }
 
 .room-card-actions {
   display: grid;
-  grid-template-columns: 1fr 1.3fr;
-  gap: 10px;
-  margin-top: 8px;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.room-card-actions .btn {
+  padding: 9px 8px;
+  font-size: 0.70rem;
+  letter-spacing: 0.4px;
 }
 
 /* Disabled state when room is booked */
@@ -3059,7 +3070,9 @@ section[id],
     }
 
     .rooms-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(240px, 320px));
+      justify-content: center;
+      max-width: 660px;
     }
 
     .availability-bar-form {
@@ -3191,8 +3204,9 @@ section[id],
     .rooms-grid {
       display: flex;
       flex-direction: column;
-      gap: 28px;
-      padding: 0;
+      align-items: center;
+      gap: 20px;
+      padding: 0 16px;
       margin: 0 auto;
       width: 100%;
       max-width: 100%;
@@ -3202,18 +3216,20 @@ section[id],
     .rooms-grid .room-card {
       flex: 1 1 auto;
       width: 100%;
-      max-width: 100%;
-      margin: 0;
+      max-width: 320px;
+      margin: 0 auto;
       box-sizing: border-box;
       scroll-snap-align: none;
     }
 
     .rooms-grid .room-img-wrap {
-      height: 230px;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
     }
 
     .rooms-grid .room-details {
-      padding: 22px 18px;
+      padding: 14px 16px 16px;
     }
 
     .rooms-mobile-swipe-indicator {
