@@ -200,9 +200,14 @@ function initAutoRefreshEngine() {
 }
 
 /**
- * Global Silent Auto-Refresh Trigger
+ * Global Silent Auto-Refresh Trigger (Throttled to max once every 45s)
  */
+let lastAutoRefreshTimestamp = 0;
 window.triggerAutoRefresh = async function () {
+  const now = Date.now();
+  if (now - lastAutoRefreshTimestamp < 45000) return; // Prevent spamming Google Apps Script
+  lastAutoRefreshTimestamp = now;
+
   try {
     await fetchAndApplyRoomsAndSettings();
     if (typeof window.checkAvailabilityAction === 'function') {
@@ -259,7 +264,6 @@ async function fetchAndApplyRoomsAndSettings() {
 
         // Re-render rooms grid to reflect changes/new rooms/updated prices from Google Sheets
         renderRoomsGrid(data.rooms);
-        window.checkAvailabilityAction(false);
       }
     }
   } catch (err) {
@@ -748,18 +752,82 @@ window.addEventListener('unhandledrejection', (event) => {
 /* ==========================================================================
    3. AVAILABILITY ENGINE & DATE OVERLAP LOGIC
    ========================================================================== */
+// Availability In-Memory Cache (Key: `${checkin}_${checkout}_${guests}`, Value: { results, timestamp })
+const availabilityCache = new Map();
+const AVAILABILITY_CACHE_TTL_MS = 60 * 1000; // 60 seconds
+let activeAvailabilityAbortController = null;
+
 /**
- * Check Availability Action
+ * Render availability UI across room cards and feedback banner
+ */
+function renderAvailabilityUI(results, nights, checkin, checkout, guests, shouldScroll) {
+  let availableCount = 0;
+  let totalAvailableUnits = 0;
+
+  results.forEach(res => {
+    res.capacity = Math.max(Number(res.capacity) || 0, 4);
+    if (!res.is_available && res.unavailability_reason && res.unavailability_reason.toLowerCase().includes('capacity') && guests <= 4) {
+      if (!res.overlapping_dates || res.overlapping_dates.length === 0) {
+        res.is_available = true;
+        res.unavailability_reason = '';
+      }
+    }
+    if (res.is_available) {
+      availableCount++;
+      totalAvailableUnits += (typeof res.remaining_units === 'number' ? res.remaining_units : 8);
+    }
+  });
+
+  applyAvailabilityToDOM(results, nights);
+
+  const banner = document.getElementById('availabilityBanner');
+  const bannerTitle = document.getElementById('bannerTitle');
+  const bannerDesc = document.getElementById('bannerDesc');
+  const bannerIcon = document.getElementById('bannerIcon');
+
+  if (banner && shouldScroll) {
+    banner.style.display = 'block';
+    if (availableCount > 0) {
+      banner.className = 'availability-status-banner';
+      if (bannerIcon) bannerIcon.textContent = '✓';
+      if (bannerTitle) {
+        if (availableCount === results.length) {
+          bannerTitle.textContent = `Both AC & Non-AC Rooms Available (${totalAvailableUnits} of 16 Rooms Open)`;
+        } else {
+          bannerTitle.textContent = `${totalAvailableUnits} Rooms Available (${availableCount} Category Open)`;
+        }
+      }
+      if (bannerDesc) {
+        if (guests >= 3) {
+          bannerDesc.textContent = `Stay for ${nights} ${nights === 1 ? 'Night' : 'Nights'} (${formatDisplayDate(checkin)} to ${formatDisplayDate(checkout)}) for ${guests} Guests. Accommodates 2 Adults + 2 Children per room (extra bed or second room available on request).`;
+        } else {
+          bannerDesc.textContent = `Stay for ${nights} ${nights === 1 ? 'Night' : 'Nights'} (${formatDisplayDate(checkin)} to ${formatDisplayDate(checkout)}) for ${guests} ${guests === 1 ? 'Guest' : 'Guests'}.`;
+        }
+      }
+    } else {
+      banner.className = 'availability-status-banner error';
+      if (bannerIcon) bannerIcon.textContent = '✕';
+      if (bannerTitle) bannerTitle.textContent = 'No Rooms Available For Selected Dates';
+      if (bannerDesc) bannerDesc.textContent = 'All 16 rooms are reserved for these dates or exceed guest capacity. Try selecting different dates or chat with our host directly.';
+    }
+  }
+
+  if (shouldScroll) {
+    const roomsSection = document.getElementById('rooms');
+    if (roomsSection) {
+      roomsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+}
+
+/**
+ * Check Availability Action (Instant Local Calculation + Background Live Sync)
  * @param {boolean} shouldScroll - whether to scroll to rooms section
  */
 window.checkAvailabilityAction = async function (shouldScroll = true) {
   const checkinInput = document.getElementById('checkinDate');
   const checkoutInput = document.getElementById('checkoutDate');
   const guestSelect = document.getElementById('guestCount');
-  const banner = document.getElementById('availabilityBanner');
-  const bannerTitle = document.getElementById('bannerTitle');
-  const bannerDesc = document.getElementById('bannerDesc');
-  const bannerIcon = document.getElementById('bannerIcon');
   const checkBtn = document.getElementById('checkAvailBtn');
 
   if (!checkinInput || !checkoutInput) return;
@@ -793,151 +861,61 @@ window.checkAvailabilityAction = async function (shouldScroll = true) {
     return;
   }
 
-  // Show spinner on search button ONLY on explicit user click (shouldScroll === true)
-  if (checkBtn && shouldScroll) {
-    checkBtn.classList.add('is-loading');
-    checkBtn.disabled = true;
+  // 1. Instant 0ms response: Calculate and display local availability immediately (no freezing/waiting)
+  const localResults = calculateLocalAvailability(checkin, checkout, guests);
+  renderAvailabilityUI(localResults, nights, checkin, checkout, guests, shouldScroll);
+
+  // 2. Check fresh in-memory cache for live server results
+  const cacheKey = `${checkin}_${checkout}_${guests}`;
+  const cached = availabilityCache.get(cacheKey);
+  const now = Date.now();
+  if (cached && (now - cached.timestamp < AVAILABILITY_CACHE_TTL_MS)) {
+    renderAvailabilityUI(cached.results, nights, checkin, checkout, guests, false);
+    return;
   }
 
+  // Only perform network sync if backend is configured and user explicitly searched
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.trim() === '' || !shouldScroll) {
+    return;
+  }
+
+  // 3. Live server sync in background with AbortController timeout & request deduplication
+  if (checkBtn) checkBtn.classList.add('is-loading');
+
+  if (activeAvailabilityAbortController) {
+    try { activeAvailabilityAbortController.abort(); } catch (e) {}
+  }
+  activeAvailabilityAbortController = new AbortController();
+  const currentController = activeAvailabilityAbortController;
+  const timeoutId = setTimeout(() => {
+    try { currentController.abort(); } catch (e) {}
+  }, 6000);
+
   try {
-    let results = [];
-    let isApiConnected = false;
+    const serverGuests = Math.min(guests, 2);
+    const apiUrl = `${APPS_SCRIPT_URL}?action=checkAvailability&check_in=${encodeURIComponent(checkin)}&check_out=${encodeURIComponent(checkout)}&guests=${serverGuests}`;
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      mode: 'cors',
+      signal: currentController.signal
+    });
+    clearTimeout(timeoutId);
 
-    // Attempt Google Apps Script live fetch if configured
-    if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '') {
-      const serverGuests = Math.min(guests, 2);
-      const apiUrl = `${APPS_SCRIPT_URL}?action=checkAvailability&check_in=${encodeURIComponent(checkin)}&check_out=${encodeURIComponent(checkout)}&guests=${serverGuests}`;
-      const response = await fetch(apiUrl, { method: 'GET', mode: 'cors' });
-
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status}`);
-      }
-
+    if (response.ok) {
       const data = await response.json();
-      if (data && data.status === 'success') {
-        results = data.results || (data.data && data.data.results) || [];
-        isApiConnected = true;
-      } else {
-        const errMsg = data.message || 'Unable to fetch availability from server.';
-        throw new Error(errMsg);
-      }
-    } else {
-      // Seamless Local In-Memory Overlap Calculation (Standard formula)
-      results = calculateLocalAvailability(checkin, checkout, guests);
-    }
-
-    // Update Room Card UI
-    let availableCount = 0;
-    results.forEach(res => {
-      res.capacity = Math.max(Number(res.capacity) || 0, 4);
-      // If server returned unavailable ONLY due to room capacity when up to 4 guests are permitted
-      if (!res.is_available && res.unavailability_reason && res.unavailability_reason.toLowerCase().includes('capacity') && guests <= 4) {
-        if (!res.overlapping_dates || res.overlapping_dates.length === 0) {
-          res.is_available = true;
-          res.unavailability_reason = '';
-        }
-      }
-      const roomCard = document.querySelector(`.room-card[data-room-id="${res.room_id}"]`);
-      const badge = document.getElementById(`badge-${res.room_id}`);
-      const bookBtn = roomCard ? roomCard.querySelector('.book-room-btn') : null;
-
-      if (badge && roomCard && bookBtn) {
-        if (res.is_available) {
-          availableCount++;
-          badge.className = 'room-status-badge available';
-          badge.textContent = res.remaining_units && res.remaining_units < 8 ? `Available (${res.remaining_units} Left)` : 'Available';
-          roomCard.classList.remove('is-booked');
-          bookBtn.disabled = false;
-          bookBtn.textContent = 'SELECT & BOOK';
-        } else {
-          roomCard.classList.add('is-booked');
-          bookBtn.disabled = true;
-          if (res.unavailability_reason && res.unavailability_reason.toLowerCase().includes('capacity')) {
-            badge.className = 'room-status-badge exceeded';
-            badge.textContent = `Max ${res.capacity} Guests`;
-            bookBtn.textContent = 'EXCEEDS CAPACITY';
-          } else {
-            badge.className = 'room-status-badge booked';
-            if (res.overlapping_dates && res.overlapping_dates.length > 0) {
-              const dateStr = res.overlapping_dates.map(d => {
-                const sIn = formatShortDate(d.check_in);
-                const sOut = formatShortDate(d.check_out);
-                return `${sIn}–${sOut}`;
-              }).join(', ');
-              badge.textContent = `Booked (${dateStr})`;
-              bookBtn.textContent = `OCCUPIED (${dateStr})`;
-            } else {
-              badge.textContent = 'Booked for Dates';
-              bookBtn.textContent = 'UNAVAILABLE';
-            }
-          }
-        }
-      }
-    });
-
-    // Calculate total individual rooms available across all 16 units
-    let totalAvailableUnits = 0;
-    results.forEach(res => {
-      if (res.is_available) {
-        totalAvailableUnits += (typeof res.remaining_units === 'number' ? res.remaining_units : 8);
-      }
-    });
-
-    // Update Feedback Banner only when user explicitly searched
-    if (banner && shouldScroll) {
-      banner.style.display = 'block';
-      if (availableCount > 0) {
-        banner.className = 'availability-status-banner';
-        if (bannerIcon) bannerIcon.textContent = '✓';
-        if (bannerTitle) {
-          if (availableCount === results.length) {
-            bannerTitle.textContent = `Both AC & Non-AC Rooms Available (${totalAvailableUnits} of 16 Rooms Open)`;
-          } else {
-            bannerTitle.textContent = `${totalAvailableUnits} Rooms Available (${availableCount} Category Open)`;
-          }
-        }
-        if (bannerDesc) {
-          if (guests >= 3) {
-            bannerDesc.textContent = `Stay for ${nights} ${nights === 1 ? 'Night' : 'Nights'} (${formatDisplayDate(checkin)} to ${formatDisplayDate(checkout)}) for ${guests} Guests. Accommodates 2 Adults + 2 Children per room (extra bed or second room available on request).`;
-          } else {
-            bannerDesc.textContent = `Stay for ${nights} ${nights === 1 ? 'Night' : 'Nights'} (${formatDisplayDate(checkin)} to ${formatDisplayDate(checkout)}) for ${guests} ${guests === 1 ? 'Guest' : 'Guests'}.`;
-          }
-        }
-      } else {
-        banner.className = 'availability-status-banner error';
-        if (bannerIcon) bannerIcon.textContent = '✕';
-        if (bannerTitle) bannerTitle.textContent = 'No Rooms Available For Selected Dates';
-        if (bannerDesc) bannerDesc.textContent = 'All 16 rooms are reserved for these dates or exceed guest capacity. Try selecting different dates or chat with our host directly.';
+      const serverResults = data.results || (data.data && data.data.results);
+      if (data && data.status === 'success' && Array.isArray(serverResults) && serverResults.length > 0) {
+        availabilityCache.set(cacheKey, { results: serverResults, timestamp: Date.now() });
+        // Seamlessly update UI with live server confirmed inventory
+        renderAvailabilityUI(serverResults, nights, checkin, checkout, guests, false);
       }
     }
-
-    if (shouldScroll) {
-      const roomsSection = document.getElementById('rooms');
-      if (roomsSection) {
-        roomsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-
   } catch (err) {
-    console.warn('[Availability Check Notice]', err.message);
-
-    // If explicit user search failed, show notice
-    if (shouldScroll && APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '') {
-      if (banner) {
-        banner.style.display = 'block';
-        banner.className = 'availability-status-banner error';
-        if (bannerIcon) bannerIcon.textContent = '⚠';
-        if (bannerTitle) bannerTitle.textContent = 'Live Sync Temporarily Offline';
-        if (bannerDesc) bannerDesc.textContent = 'Unable to reach the live booking server. Showing cached property availability. Please contact us on WhatsApp for real-time confirmation.';
-      }
-    }
-
-    // Apply local fallback
-    const fallbackResults = calculateLocalAvailability(checkin, checkout, guests);
-    applyAvailabilityToDOM(fallbackResults, nights);
-
+    // Silent failover to local calculation - never show scary offline error to guests
+    console.debug('[Availability Live Sync Notice]', err.message);
   } finally {
-    if (checkBtn && shouldScroll) {
+    clearTimeout(timeoutId);
+    if (checkBtn) {
       checkBtn.classList.remove('is-loading');
       checkBtn.disabled = false;
     }
@@ -1498,38 +1476,31 @@ window.recalcModalStay = async function () {
     }
   }
 
-  // Check live availability for this room on these selected future dates
+  // Check availability for this room on these selected future dates (cache-first + instant local)
   let isAvailable = true;
   let occupiedDatesText = '';
 
-  try {
-    if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '') {
-      const apiUrl = `${APPS_SCRIPT_URL}?action=checkAvailability&check_in=${encodeURIComponent(inInput.value)}&check_out=${encodeURIComponent(outInput.value)}&room_id=${encodeURIComponent(roomId)}`;
-      const res = await fetch(apiUrl, { method: 'GET', mode: 'cors' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.status === 'success' && Array.isArray(data.results)) {
-          const match = data.results.find(r => r.room_id === roomId);
-          if (match) {
-            isAvailable = match.is_available;
-            if (match.overlapping_dates && match.overlapping_dates.length > 0) {
-              occupiedDatesText = match.overlapping_dates.map(d => `${formatShortDate(d.check_in)}–${formatShortDate(d.check_out)}`).join(', ');
-            }
-          }
-        }
-      }
-    } else {
-      const localResults = calculateLocalAvailability(inInput.value, outInput.value, 1);
-      const match = localResults.find(r => r.room_id === roomId);
-      if (match) {
-        isAvailable = match.is_available;
-        if (match.overlapping_dates && match.overlapping_dates.length > 0) {
-          occupiedDatesText = match.overlapping_dates.map(d => `${formatShortDate(d.check_in)}–${formatShortDate(d.check_out)}`).join(', ');
-        }
+  const cacheKey = `${inInput.value}_${outInput.value}_1`;
+  const cached = availabilityCache.get(cacheKey) || availabilityCache.get(`${inInput.value}_${outInput.value}_2`);
+
+  if (cached && cached.results) {
+    const match = cached.results.find(r => r.room_id === roomId);
+    if (match) {
+      isAvailable = match.is_available;
+      if (match.overlapping_dates && match.overlapping_dates.length > 0) {
+        occupiedDatesText = match.overlapping_dates.map(d => `${formatShortDate(d.check_in)}–${formatShortDate(d.check_out)}`).join(', ');
       }
     }
-  } catch (e) {
-    console.warn('[Modal Live Check Notice]', e.message);
+  } else {
+    // Instant local evaluation
+    const localResults = calculateLocalAvailability(inInput.value, outInput.value, 1);
+    const match = localResults.find(r => r.room_id === roomId);
+    if (match) {
+      isAvailable = match.is_available;
+      if (match.overlapping_dates && match.overlapping_dates.length > 0) {
+        occupiedDatesText = match.overlapping_dates.map(d => `${formatShortDate(d.check_in)}–${formatShortDate(d.check_out)}`).join(', ');
+      }
+    }
   }
 
   if (availBadge) {

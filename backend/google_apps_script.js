@@ -192,11 +192,19 @@ function jsonResponse(data) {
 }
 
 /**
- * 1. Get All Active Rooms
+ * 1. Get All Active Rooms (with CacheService acceleration)
  */
-function handleGetRooms() {
+function handleGetRooms(ss) {
   try {
-    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get('rooms_catalog_v2');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {}
+    }
+
+    if (!ss) ss = getTargetSpreadsheet();
     var sheet = ss.getSheetByName(SHEET_ROOMS);
     if (!sheet) {
       return createErrorResponse('SHEET_ERROR', 'Rooms database not configured. Please run initialSetup().', 'Sheet "Rooms" missing');
@@ -234,13 +242,6 @@ function handleGetRooms() {
         var defaultRealImg = isNonAc ? 'assets/images/non-ac-room.jpg' : 'assets/images/ac-room.jpg';
         var cleanImg = (!rawImg || rawImg.indexOf('unsplash.com') !== -1) ? defaultRealImg : rawImg;
 
-        // Auto-fix the spreadsheet cell in Google Sheets if it contains old Unsplash link
-        if (rawImg && rawImg.indexOf('unsplash.com') !== -1 && imgIdx >= 0) {
-          try {
-            sheet.getRange(i + 1, imgIdx + 1).setValue(cleanImg);
-          } catch (updateErr) {}
-        }
-
         var rawPrice = priceIdx >= 0 ? String(row[priceIdx]).replace(/[^0-9.]/g, '') : '0';
         var parsedPrice = Number(rawPrice) || 0;
 
@@ -258,15 +259,56 @@ function handleGetRooms() {
       }
     }
 
-    return createSuccessResponse({ rooms: rooms }, 'Rooms loaded successfully.');
+    var result = createSuccessResponse({ rooms: rooms }, 'Rooms loaded successfully.');
+    try {
+      cache.put('rooms_catalog_v2', JSON.stringify(result), 1800); // 30 minutes
+    } catch (e) {}
+    return result;
   } catch (err) {
     return createErrorResponse('SHEET_ERROR', 'Could not load room catalog.', err.toString());
   }
 }
 
 /**
- * 2. Check Availability (Overlap Engine)
- * Overlap Rule: requested_check_in < existing_check_out AND requested_check_out > existing_check_in
+ * Cache-accelerated active bookings retriever
+ */
+function getCachedActiveBookings(bookingSheet) {
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get('active_bookings_v2');
+  if (cached) {
+    try {
+      var arr = JSON.parse(cached);
+      return arr.map(function(item) {
+        return {
+          booking_id: item.booking_id,
+          room_id: item.room_id,
+          check_in: new Date(item.check_in),
+          check_out: new Date(item.check_out),
+          status: item.status
+        };
+      });
+    } catch(e) {}
+  }
+
+  var list = getActiveBookingsFromSheet(bookingSheet);
+  try {
+    var toCache = list.map(function(b) {
+      return {
+        booking_id: b.booking_id,
+        room_id: b.room_id,
+        check_in: b.check_in.toISOString(),
+        check_out: b.check_out.toISOString(),
+        status: b.status
+      };
+    });
+    cache.put('active_bookings_v2', JSON.stringify(toCache), 45); // 45 seconds cache
+  } catch(e) {}
+
+  return list;
+}
+
+/**
+ * 2. Check Availability (Optimized Single Sheet Resolver + Cache)
  */
 function handleCheckAvailability(checkinStr, checkoutStr, guests, filterRoomId) {
   try {
@@ -297,14 +339,14 @@ function handleCheckAvailability(checkinStr, checkoutStr, guests, filterRoomId) 
       return createErrorResponse('VALIDATION_ERROR', 'Maximum continuous booking length is 30 nights. Please contact host directly for long stays.');
     }
 
-    var roomsRes = handleGetRooms();
+    var ss = getTargetSpreadsheet();
+    var roomsRes = handleGetRooms(ss);
     if (roomsRes.status !== 'success') return roomsRes;
     var allRooms = roomsRes.rooms;
 
-    // Read active bookings from Bookings sheet
-    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    // Read active bookings from Bookings sheet (with caching)
     var bookingSheet = ss.getSheetByName(SHEET_BOOKINGS);
-    var activeBookings = getActiveBookingsFromSheet(bookingSheet);
+    var activeBookings = getCachedActiveBookings(bookingSheet);
 
     // Evaluate availability per room based on total inventory (8 AC, 8 Non-AC)
     var maxInventory = 8;
@@ -542,6 +584,9 @@ function handleCreateBookingLocked(data) {
       timestampStr,
       timestampStr
     ]);
+
+    // Invalidate availability cache so new booking takes effect immediately
+    try { CacheService.getScriptCache().remove('active_bookings_v2'); } catch (cacheErr) {}
 
     var bookingData = {
       booking_id: bookingId,
